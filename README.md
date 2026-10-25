@@ -25,6 +25,7 @@ adikara/
     │   └── concept_draft.md                # Draft konsep awal produk
     │
     └── spesifikasi_software/               # Dokumen standar software engineering
+        ├── 0_BRD.md                        # Business Requirements Document
         ├── 1_PRD.md                        # Product Requirements Document
         ├── 2_SRS.md                        # Software Requirements Specification
         ├── 3_FRD.md                        # Functional Requirements Document
@@ -45,6 +46,7 @@ adikara/
 * [Draft Konsep](file:///d:/Lomba/adikara/kriyapkk/konsep_dan_alur/concept_draft.md): Catatan dasar ideasi dan problem statement awal.
 
 ### 3. Spesifikasi Rekayasa Perangkat Lunak
+* [0_BRD.md](file:///d:/Lomba/adikara/kriyapkk/spesifikasi_software/0_BRD.md): Business Requirements Document (Visi bisnis, model finansial, RACI, aturan bisnis, dan KPI).
 * [1_PRD.md](file:///d:/Lomba/adikara/kriyapkk/spesifikasi_software/1_PRD.md): Visi produk, tujuan, batasan cakupan, dan persona pengguna.
 * [2_SRS.md](file:///d:/Lomba/adikara/kriyapkk/spesifikasi_software/2_SRS.md): Kebutuhan sistem, kebutuhan fungsional & non-fungsional.
 * [3_FRD.md](file:///d:/Lomba/adikara/kriyapkk/spesifikasi_software/3_FRD.md): Rincian fitur teknis modul kasir, stok, AI vision, dan katalog.
