@@ -1,0 +1,430 @@
+NOTICE:  database "kt2" does not exist, skipping
+Pager usage is off.
+DO
+GRANT
+GRANT
+=== 1. Daftar akun (trigger) ===
+SET
+INSERT 0 5
+RESET
+ full_name |   role   |      name       | status  | harga 
+-----------+----------+-----------------+---------+-------
+ Admin     | anggota  |                 |         |     0
+ Bu Demo   | pengurus | PKK Demo        | pending |     7
+ Bu Ratna  | pengurus | PKK Melati RW04 | pending |     7
+ Bu Sari   | anggota  |                 |         |     0
+ Bu Tuti   | pengurus | PKK Mawar       | pending |     7
+(5 rows)
+
+SET
+UPDATE 1
+UPDATE 1
+RESET
+=== 2. Kelompok pending: tidak bisa apa-apa ===
+SET
+              set_config              
+--------------------------------------
+ aaaaaaaa-0000-0000-0000-000000000001
+(1 row)
+
+      name       | status  
+-----------------+---------
+ PKK Melati RW04 | pending
+(1 row)
+
+ group_belum_aktif 
+-------------------
+ t
+(1 row)
+
+psql:/tmp/10_test.sql:32: ERROR:  new row violates row-level security policy for table "residents"
+ harga_terlihat 
+----------------
+              0
+(1 row)
+
+=== 3. Admin aktivasi ===
+              set_config              
+--------------------------------------
+ cccccccc-0000-0000-0000-000000000001
+(1 row)
+
+ admin_set_group_status 
+------------------------
+ 
+ 
+(2 rows)
+
+      name       | status  |  pengurus_email  | members 
+-----------------+---------+------------------+---------
+ PKK Demo        | pending | demo@kriyapkk.id |       1
+ PKK Melati RW04 | active  | ratna@melati.id  |       2
+ PKK Mawar       | active  | tuti@mawar.id    |       1
+(3 rows)
+
+              set_config              
+--------------------------------------
+ bbbbbbbb-0000-0000-0000-000000000001
+(1 row)
+
+psql:/tmp/10_test.sql:40: ERROR:  AKSES_DITOLAK: khusus admin platform
+CONTEXT:  PL/pgSQL function public._require_admin() line 4 at RAISE
+SQL statement "SELECT public._require_admin()"
+PL/pgSQL function public.admin_set_group_status(uuid,text) line 3 at PERFORM
+=== 4. Setoran kelompok A ===
+              set_config              
+--------------------------------------
+ aaaaaaaa-0000-0000-0000-000000000001
+(1 row)
+
+   name   | balance 
+----------+---------
+ Pak Joko |    0.00
+(1 row)
+
+INSERT 0 1
+psql:/tmp/10_test.sql:45: ERROR:  permission denied for table residents
+{"total": 10500.00, "deposit_id": "35621ede-a0bc-47cc-8db2-92027e107f13"}
+                                        approve_deposit                                        
+-----------------------------------------------------------------------------------------------
+ {"total": 10500.00, "paid_cash": false, "deposit_id": "35621ede-a0bc-47cc-8db2-92027e107f13"}
+(1 row)
+
+psql:/tmp/10_test.sql:52: ERROR:  SETORAN_SUDAH_DIPROSES: status approved
+CONTEXT:  PL/pgSQL function public._approve_deposit(uuid,uuid,boolean,uuid,timestamp with time zone) line 10 at RAISE
+PL/pgSQL function public.approve_deposit(uuid,boolean) line 3 at RETURN
+   name   | balance  
+----------+----------
+ Pak Joko | 10500.00
+(1 row)
+
+  item_type  | qty_kg | avg_value_per_kg 
+-------------+--------+------------------
+ Kardus      |  3.000 |          1500.00
+ Plastik PET |  2.000 |          3000.00
+(2 rows)
+
+UPDATE 1
+                                       approve_deposit                                        
+----------------------------------------------------------------------------------------------
+ {"total": 12500.00, "paid_cash": true, "deposit_id": "29f5d977-6264-42f8-96ab-49bb52fc107d"}
+(1 row)
+
+  item_type  | qty_kg | avg_value_per_kg 
+-------------+--------+------------------
+ Kain perca  |  1.500 |          3000.00
+ Kardus      |  3.000 |          1500.00
+ Plastik PET |  4.000 |          3500.00
+(3 rows)
+
+psql:/tmp/10_test.sql:61: ERROR:  HARGA_BELUM_DIATUR: Emas
+CONTEXT:  PL/pgSQL function public.create_deposit(uuid,jsonb,text,text,jsonb) line 38 at RAISE
+ withdraw_balance 
+------------------
+          5500.00
+(1 row)
+
+psql:/tmp/10_test.sql:63: ERROR:  SALDO_TIDAK_CUKUP
+CONTEXT:  PL/pgSQL function public.withdraw_balance(uuid,numeric,text) line 11 at RAISE
+psql:/tmp/10_test.sql:64: ERROR:  permission denied for table residents
+psql:/tmp/10_test.sql:65: ERROR:  permission denied for table cash_ledger
+psql:/tmp/10_test.sql:66: ERROR:  permission denied for table stock
+ entry_type |     category      |  amount  |           note            
+------------+-------------------+----------+---------------------------
+ out        | pembelian_setoran | 12500.00 | Bayar tunai setoran warga
+ out        | pembelian_setoran |  5000.00 | Pencairan saldo warga
+(2 rows)
+
+=== 5. Isolasi kelompok B ===
+              set_config              
+--------------------------------------
+ bbbbbbbb-0000-0000-0000-000000000001
+(1 row)
+
+ residents_a_terlihat 
+----------------------
+                    0
+(1 row)
+
+ deposits_a_terlihat 
+---------------------
+                   0
+(1 row)
+
+ stock_a_terlihat 
+------------------
+                0
+(1 row)
+
+ ledger_a_terlihat 
+-------------------
+                 0
+(1 row)
+
+psql:/tmp/10_test.sql:75: ERROR:  WARGA_TIDAK_DITEMUKAN
+CONTEXT:  PL/pgSQL function public.create_deposit(uuid,jsonb,text,text,jsonb) line 13 at RAISE
+psql:/tmp/10_test.sql:76: ERROR:  SETORAN_TIDAK_DITEMUKAN
+CONTEXT:  PL/pgSQL function public._approve_deposit(uuid,uuid,boolean,uuid,timestamp with time zone) line 9 at RAISE
+PL/pgSQL function public.approve_deposit(uuid,boolean) line 3 at RETURN
+   name    
+-----------
+ PKK Mawar
+(1 row)
+
+=== 6. Ide, produksi, penjualan ===
+              set_config              
+--------------------------------------
+ aaaaaaaa-0000-0000-0000-000000000001
+(1 row)
+
+           title           | material_cost | extra_cost | tool_cost | labor_cost | unit_cost | margin | sell_price 
+---------------------------+---------------+------------+-----------+------------+-----------+--------+------------
+ Pouch kosmetik kain perca |        750.00 |    2500.00 |    500.00 |    7500.00 |  11250.00 |   0.40 |   16000.00
+(1 row)
+
+ max_units |                         materials_status                          
+-----------+-------------------------------------------------------------------
+         6 | [{"need_kg": 0.25, "stock_kg": 1.500, "item_type": "Kain perca"}]
+(1 row)
+
+psql:/tmp/10_test.sql:84: ERROR:  STOK_KURANG: Kain perca butuh 2.50 kg, tersedia 1.500 kg
+CONTEXT:  PL/pgSQL function public._start_batch(uuid,uuid,uuid,integer,uuid[],timestamp with time zone) line 28 at RAISE
+PL/pgSQL function public.start_batch(uuid,integer,uuid[]) line 3 at RETURN
+ item_type  | qty_kg 
+------------+--------
+ Kain perca |  0.500
+(1 row)
+
+ status  | material_value | extra_cost_total | tool_cost_total 
+---------+----------------+------------------+-----------------
+ running |        3000.00 |         10000.00 |         2000.00
+(1 row)
+
+              set_config              
+--------------------------------------
+ aaaaaaaa-0000-0000-0000-000000000002
+(1 row)
+
+ anggota_lihat_warga 
+---------------------
+                   0
+(1 row)
+
+ anggota_lihat_stok 
+--------------------
+                  3
+(1 row)
+
+                                                            finish_batch                                                             
+-------------------------------------------------------------------------------------------------------------------------------------
+ {"batch_id": "4edba380-1e35-4e6a-bb0c-65c68dcc81fa", "unit_cost": 5000, "finished_good_id": "d0fcdc1d-4cb3-4468-9bf6-68f68a286c77"}
+(1 row)
+
+psql:/tmp/10_test.sql:93: ERROR:  AKSES_DITOLAK: khusus pengurus kelompok aktif
+CONTEXT:  PL/pgSQL function public._require_pengurus() line 5 at RAISE
+PL/pgSQL function public.record_sale(uuid,integer,numeric,text,date) line 3 at RETURN
+              set_config              
+--------------------------------------
+ aaaaaaaa-0000-0000-0000-000000000001
+(1 row)
+
+ pay_wages 
+-----------
+     30000
+(1 row)
+
+           name            | qty | unit_cost | sell_price 
+---------------------------+-----+-----------+------------
+ Pouch kosmetik kain perca |   3 |  15000.00 |   16000.00
+(1 row)
+
+                                     record_sale                                     
+-------------------------------------------------------------------------------------
+ {"total": 32000, "sale_id": "f3f79cbc-3cf5-4e1b-9fec-eca8e451dc2c", "sisa_stok": 1}
+(1 row)
+
+psql:/tmp/10_test.sql:98: ERROR:  STOK_PRODUK_KURANG: tersedia 1 unit
+CONTEXT:  PL/pgSQL function public._record_sale(uuid,uuid,uuid,integer,numeric,text,date) line 11 at RAISE
+PL/pgSQL function public.record_sale(uuid,integer,numeric,text,date) line 3 at RETURN
+                                                           update_idea_pricing                                                            
+------------------------------------------------------------------------------------------------------------------------------------------
+ {"margin": 0.6, "tool_cost": 500, "unit_cost": 11250, "extra_cost": 2500, "labor_cost": 7500, "sell_price": 18000, "material_cost": 750}
+(1 row)
+
+                                                            update_idea_pricing                                                            
+-------------------------------------------------------------------------------------------------------------------------------------------
+ {"margin": 0.60, "tool_cost": 500, "unit_cost": 11250, "extra_cost": 2500, "labor_cost": 7500, "sell_price": 25000, "material_cost": 750}
+(1 row)
+
+ margin | sell_price 
+--------+------------
+   1.22 |   25000.00
+(1 row)
+
+              set_config              
+--------------------------------------
+ aaaaaaaa-0000-0000-0000-000000000002
+(1 row)
+
+  amount  
+----------
+ 30000.00
+(1 row)
+
+              set_config              
+--------------------------------------
+ aaaaaaaa-0000-0000-0000-000000000001
+(1 row)
+
+=== 7. Laporan ===
+                                                                                                                                                                  report_profit_loss                                                                                                                                                                   
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"dari": "2026-09-25", "laba": 2000.00, "sampai": "2026-10-25", "kas_masuk": 32000.00, "saldo_kas": -25500.00, "kas_keluar": 57500.00, "pendapatan": 32000.00, "unit_terjual": 2, "modal_terjual": 30000.00, "kas_per_kategori": {"out:upah": 30000.00, "in:penjualan": 32000.00, "out:bahan_tambahan": 10000.00, "out:pembelian_setoran": 17500.00}}
+(1 row)
+
+                                                                                                                                                                                                                                                                   report_impact                                                                                                                                                                                                                                                                   
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"laba": 2000.00, "total_kg": 8.500, "pendapatan": 32000.00, "jumlah_warga": 1, "kg_per_jenis": {"Kardus": 3.000, "Kain perca": 1.500, "Plastik PET": 4.000}, "tren_bulanan": [{"kg": 0, "laba": 0, "bulan": "2026-08", "pendapatan": 0, "rupiah_warga": 0}, {"kg": 0, "laba": 0, "bulan": "2026-09", "pendapatan": 0, "rupiah_warga": 0}, {"kg": 8.500, "laba": 2000.00, "bulan": "2026-10", "pendapatan": 32000.00, "rupiah_warga": 23000.00}], "upah_anggota": 30000.00, "produk_dibuat": 3, "produk_terjual": 2, "rupiah_ke_warga": 23000.00}
+(1 row)
+
+=== 8. Koreksi kas ===
+          reverse_cash_entry          
+--------------------------------------
+ 5c33e26f-d347-4dec-a854-82051a0f255f
+(1 row)
+
+psql:/tmp/10_test.sql:113: ERROR:  ENTRI_SUDAH_DIKOREKSI
+CONTEXT:  PL/pgSQL function public.reverse_cash_entry(uuid,text) line 11 at RAISE
+            add_cash_entry            
+--------------------------------------
+ d459af21-187f-4722-a4ae-fb3df184fcff
+(1 row)
+
+psql:/tmp/10_test.sql:115: ERROR:  KATEGORI_TIDAK_BOLEH_MANUAL: penjualan
+CONTEXT:  PL/pgSQL function public.add_cash_entry(text,text,numeric,text,date) line 5 at RAISE
+ saldo_kas 
+-----------
+ 142500.00
+(1 row)
+
+=== 9. Kuota AI ===
+              set_config              
+--------------------------------------
+ cccccccc-0000-0000-0000-000000000001
+(1 row)
+
+ admin_set_quota 
+-----------------
+ 
+(1 row)
+
+              set_config              
+--------------------------------------
+ aaaaaaaa-0000-0000-0000-000000000001
+(1 row)
+
+ finish_ai_usage 
+-----------------
+ 
+(1 row)
+
+ consume_ai_quota 
+------------------
+                2
+(1 row)
+
+psql:/tmp/10_test.sql:125: ERROR:  KUOTA_HABIS: kuota scan hari ini (2) sudah terpakai
+CONTEXT:  PL/pgSQL function public.consume_ai_quota(text,text) line 15 at RAISE
+                                   ai_quota_status                                   
+-------------------------------------------------------------------------------------
+ {"idea_used": 0, "scan_used": 2, "guide_used": 0, "idea_quota": 1, "scan_quota": 2}
+(1 row)
+
+INSERT 0 1
+   hash   
+----------
+ scan:abc
+(1 row)
+
+ save_idea_guide 
+-----------------
+ t
+(1 row)
+
+ save_idea_guide 
+-----------------
+ f
+(1 row)
+
+=== 10. Storage ===
+INSERT 0 1
+              set_config              
+--------------------------------------
+ bbbbbbbb-0000-0000-0000-000000000001
+(1 row)
+
+psql:/tmp/10_test.sql:136: ERROR:  new row violates row-level security policy for table "objects"
+ foto_a_terlihat_oleh_b 
+------------------------
+                      0
+(1 row)
+
+=== 11. Profil: pengurus tidak bisa ubah dirinya / jadikan admin ===
+              set_config              
+--------------------------------------
+ aaaaaaaa-0000-0000-0000-000000000001
+(1 row)
+
+UPDATE 0
+psql:/tmp/10_test.sql:142: ERROR:  new row violates row-level security policy for table "profiles"
+UPDATE 1
+psql:/tmp/10_test.sql:144: ERROR:  permission denied for table groups
+UPDATE 1
+RESET
+=== 12. anon ===
+SET
+psql:/tmp/10_test.sql:150: ERROR:  permission denied for table residents
+psql:/tmp/10_test.sql:151: ERROR:  permission denied for function approve_deposit
+RESET
+SET
+              set_config              
+--------------------------------------
+ aaaaaaaa-0000-0000-0000-000000000001
+(1 row)
+
+psql:/tmp/10_test.sql:155: ERROR:  permission denied for function demo_seed
+RESET
+=== 13. Demo seed (sebagai postgres / SQL Editor) ===
+                  demo_seed                   
+----------------------------------------------
+ {"ideas": 3, "deposits": 24, "residents": 6}
+(1 row)
+
+SET
+              set_config              
+--------------------------------------
+ dddddddd-0000-0000-0000-000000000001
+(1 row)
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                              report_impact                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"laba": 71215.00, "total_kg": 122.000, "pendapatan": 257500.00, "jumlah_warga": 6, "kg_per_jenis": {"Kaca": 16.000, "Logam": 14.000, "Kardus": 16.000, "Kertas": 17.000, "Kain perca": 32.000, "Plastik PET": 14.000, "Plastik HDPE": 13.000}, "tren_bulanan": [{"kg": 0, "laba": 0, "bulan": "2026-05", "pendapatan": 0, "rupiah_warga": 0}, {"kg": 0, "laba": 0, "bulan": "2026-06", "pendapatan": 0, "rupiah_warga": 0}, {"kg": 15.000, "laba": 0, "bulan": "2026-07", "pendapatan": 0, "rupiah_warga": 30650.00}, {"kg": 40.000, "laba": 0, "bulan": "2026-08", "pendapatan": 0, "rupiah_warga": 93000.00}, {"kg": 35.000, "laba": 18886.00, "bulan": "2026-09", "pendapatan": 119000.00, "rupiah_warga": 79050.00}, {"kg": 32.000, "laba": 52329.00, "bulan": "2026-10", "pendapatan": 138500.00, "rupiah_warga": 76200.00}], "upah_anggota": 180000.00, "produk_dibuat": 21, "produk_terjual": 15, "rupiah_ke_warga": 278900.00}
+(1 row)
+
+                                                                                                                                                                                    report_profit_loss                                                                                                                                                                                     
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"dari": "2026-06-27", "laba": 71215.00, "sampai": "2026-10-25", "kas_masuk": 757500.00, "saldo_kas": 444500.00, "kas_keluar": 313000.00, "pendapatan": 257500.00, "unit_terjual": 15, "modal_terjual": 186285.00, "kas_per_kategori": {"out:upah": 180000.00, "in:penjualan": 257500.00, "in:modal_awal": 500000.00, "out:bahan_tambahan": 56000.00, "out:pembelian_setoran": 77000.00}}
+(1 row)
+
+  item_type   | qty_kg | avg_value_per_kg 
+--------------+--------+------------------
+ Kaca         | 16.000 |           500.00
+ Kain perca   | 29.200 |          3000.00
+ Kardus       | 12.800 |          1500.00
+ Kertas       | 17.000 |          1200.00
+ Logam        | 14.000 |          4000.00
+ Plastik HDPE | 13.000 |          2500.00
+ Plastik PET  | 13.600 |          3000.00
+(7 rows)
+
+RESET
