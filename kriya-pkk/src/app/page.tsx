@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Courier_Prime } from "next/font/google";
 import { getMe } from "@/lib/auth";
+import { Logo } from "@/components/brand";
 
 // Huruf utama (Plus Jakarta Sans) dimuat di app/layout.tsx. Courier Prime hanya untuk nota setoran.
 const nota = Courier_Prime({
@@ -65,24 +66,6 @@ function Patch({
         }`}
       />
     </div>
-  );
-}
-
-function Logo() {
-  return (
-    <span className="flex items-center gap-2.5">
-      <span
-        className="grid size-8 grid-cols-2 overflow-hidden rounded-md"
-        aria-hidden
-      >
-        {["--mentega", "--sage", "--hutan", "--persik"].map((c, i) => (
-          <Patch key={c} color={c} i={i} small />
-        ))}
-      </span>
-      <span className="text-lg font-extrabold tracking-tight text-(--tinta)">
-        KriyaPKK
-      </span>
-    </span>
   );
 }
 
@@ -455,10 +438,7 @@ export default async function Home() {
             bisa dibuka anggotanya.
           </p>
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-            <Link
-              href="/daftar"
-              className={btnLight}
-            >
+            <Link href="/daftar" className={btnLight}>
               Daftarkan kelompok PKK
             </Link>
             <Link
@@ -469,9 +449,7 @@ export default async function Home() {
             </Link>
           </div>
           <p className="mt-16 max-w-2xl text-sm leading-relaxed text-white/75">
-            KriyaPKK adalah karya Divisi Inovasi Software ADIKARA 2026, Fakultas
-            Informatika Telkom University. Mendukung SDG 8, 11, 9, 4, dan 3
-            serta Asta Cita 6, 2, dan 4.
+            © 2026 Team Claude Limit. All Rights Reserved.
           </p>
         </div>
       </section>

@@ -1,6 +1,60 @@
 import { cn } from "@/lib/utils";
 
-// Logo KriyaPKK: empat tambalan kain perca dari palet
+// Tanda "Kawung Perca": empat daun kawung berjahit yang bertemu di satu titik (posko PKK).
+// Geometri sama persis dengan file SVG di kit logo: kotak 11 × 11 petak, daun 5 × 5, celah 1 petak.
+const PETALS = [
+  { d: "M5 5A50 50 0 0 1 55 55A50 50 0 0 1 5 5Z", v: [16.5, 16.5, 43.5, 43.5], fill: "#FBE6B1" },
+  { d: "M115 5A50 50 0 0 1 65 55A50 50 0 0 1 115 5Z", v: [103.5, 16.5, 76.5, 43.5], fill: "#B2D4AB" },
+  { d: "M115 115A50 50 0 0 1 65 65A50 50 0 0 1 115 115Z", v: [103.5, 103.5, 76.5, 76.5], fill: "#F6D5AC" },
+  { d: "M5 115A50 50 0 0 1 55 65A50 50 0 0 1 5 115Z", v: [16.5, 103.5, 43.5, 76.5], fill: "#94B587" },
+];
+
+export function LogoMark({
+  variant = "warna",
+  className,
+  title,
+}: {
+  variant?: "warna" | "putih";
+  className?: string;
+  title?: string;
+}) {
+  const putih = variant === "putih";
+  return (
+    <svg
+      viewBox="0 0 120 120"
+      className={cn("shrink-0", className)}
+      role={title ? "img" : undefined}
+      aria-label={title}
+      aria-hidden={title ? undefined : true}
+    >
+      {PETALS.map((p) => (
+        <g key={p.d}>
+          <path
+            d={p.d}
+            fill={putih ? "#fff" : p.fill}
+            stroke={putih ? "#fff" : "#24361F"}
+            strokeWidth={4.5}
+            strokeLinejoin="round"
+          />
+          {/* jahitan = urat daun. Versi putih memakai warna hutan supaya tampak berlubang di latar hijau */}
+          <line
+            x1={p.v[0]}
+            y1={p.v[1]}
+            x2={p.v[2]}
+            y2={p.v[3]}
+            stroke={putih ? "#3E5E35" : "#24361F"}
+            strokeWidth={3.6}
+            strokeLinecap="round"
+            strokeDasharray="6.2 4.6"
+          />
+        </g>
+      ))}
+      <circle cx={60} cy={60} r={4.2} fill={putih ? "#fff" : "#3E5E35"} />
+    </svg>
+  );
+}
+
+// Logo lengkap: tanda + tulisan. "Kriya" tebal (karya tangan), "PKK" lebih ringan (wadah komunitas).
 export function Logo({
   compact = false,
   inverse = false,
@@ -12,14 +66,11 @@ export function Logo({
 }) {
   return (
     <span className={cn("flex items-center gap-2.5", className)}>
-      <span aria-hidden className="grid size-9 shrink-0 grid-cols-2 overflow-hidden rounded-lg">
-        <span className="bg-mentega" />
-        <span className="bg-sage" />
-        <span className={inverse ? "bg-pucuk" : "bg-hutan"} />
-        <span className="bg-persik" />
-      </span>
+      <LogoMark variant={inverse ? "putih" : "warna"} className="size-9" title={compact ? "KriyaPKK" : undefined} />
       {!compact && (
-        <span className={cn("text-lg font-extrabold tracking-tight", inverse ? "text-white" : "text-tinta")}>KriyaPKK</span>
+        <span className={cn("text-lg font-extrabold tracking-tight", inverse ? "text-white" : "text-tinta")}>
+          Kriya<span className={cn("font-medium", inverse ? "text-white" : "text-hutan")}>PKK</span>
+        </span>
       )}
     </span>
   );
