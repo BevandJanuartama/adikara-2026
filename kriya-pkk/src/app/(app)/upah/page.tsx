@@ -1,15 +1,8 @@
+import { Calendar, Clock, Coins, Factory, Wallet } from "lucide-react";
 import { requireMe } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { rupiah, tanggal } from "@/lib/format";
-import {
-  Coins,
-  Wallet,
-  Clock,
-  Calendar,
-  Factory,
-  CheckCircle2,
-  PackageCheck,
-} from "lucide-react";
+import { EmptyState, PageHeader, StatPatch } from "@/components/kriya-ui";
 
 // FR26: anggota melihat upahnya sendiri (RLS hanya mengembalikan baris miliknya)
 export default async function UpahPage() {
@@ -17,106 +10,49 @@ export default async function UpahPage() {
   const supabase = await createClient();
   const { data: wages } = await supabase
     .from("wages")
-    .select(
-      "id, amount, hours, created_at, batch:production_batches(ide:ideas(title))",
-    )
+    .select("id, amount, hours, created_at, batch:production_batches(ide:ideas(title))")
     .eq("member_id", me.id)
     .order("created_at", { ascending: false });
-
-  const total = (wages ?? []).reduce((s, w) => s + Number(w.amount), 0);
-  const wagesList = wages ?? [];
+  const list = wages ?? [];
+  const total = list.reduce((s, w) => s + Number(w.amount), 0);
+  const hours = list.reduce((s, w) => s + Number(w.hours ?? 0), 0);
 
   return (
-    <div className="mx-auto max-w-xl space-y-6 pb-12">
-      {/* Header & Judul */}
-      <div className="flex items-center justify-between border-b pb-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Upah Saya</h1>
-          <p className="text-xs text-muted-foreground">
-            Rekapitulasi pendapatan hasil produksi kerajinan
-          </p>
-        </div>
-        <div className="rounded-xl bg-emerald-50 p-2.5 text-emerald-700 shadow-2xs">
-          <Coins className="h-6 w-6" />
-        </div>
+    <div className="space-y-8">
+      <PageHeader title="Upah saya" description="Upah dari setiap batch produksi yang kamu kerjakan." icon={Coins} />
+
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
+        <StatPatch tone="persik" label="Total upah" value={rupiah(total)} icon={Wallet} className="col-span-2 md:col-span-1" />
+        <StatPatch tone="pucuk" label="Batch dikerjakan" value={`${list.length} batch`} icon={Factory} />
+        <StatPatch tone="mentega" label="Jam tercatat" value={`${hours} jam`} icon={Clock} />
       </div>
 
-      {/* Kartu Ringkasan Total Pendapatan */}
-      <div className="rounded-2xl border bg-gradient-to-br from-emerald-700 to-teal-800 p-5 text-white shadow-md flex items-center justify-between">
-        <div>
-          <p className="text-xs text-emerald-100 font-medium">
-            Total Pendapatan Upah
-          </p>
-          <p className="text-2xl font-bold tracking-tight">{rupiah(total)}</p>
-        </div>
-        <div className="rounded-xl bg-white/10 p-3 backdrop-blur-md shadow-2xs">
-          <Wallet className="h-6 w-6 text-emerald-200" />
-        </div>
-      </div>
-
-      {/* Daftar Riwayat Upah */}
-      <div className="space-y-3">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">
-          Riwayat Penerimaan Upah
-        </h2>
-
-        {wagesList.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border bg-card p-8 text-center space-y-3 shadow-2xs">
-            <div className="rounded-full bg-muted p-3 text-muted-foreground">
-              <Coins className="h-6 w-6" />
-            </div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Belum ada riwayat penerimaan upah.
-              <br />
-              Selesaikan tugas produksi kerajinan untuk mendapatkan upah.
-            </p>
-          </div>
-        ) : (
-          <ul className="divide-y rounded-2xl border bg-card shadow-2xs overflow-hidden">
-            {wagesList.map((w) => {
-              const ideaTitle =
-                (w.batch as unknown as { ide?: { title: string } } | null)?.ide
-                  ?.title ?? "Produksi Kerajinan";
-
-              return (
-                <li
-                  key={w.id}
-                  className="flex items-center justify-between p-4 text-xs sm:text-sm transition-colors hover:bg-muted/30"
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="rounded-lg bg-emerald-50 p-1.5 text-emerald-700 shrink-0">
-                        <Factory className="h-4 w-4" />
-                      </span>
-                      <p className="font-bold text-foreground">{ideaTitle}</p>
-                    </div>
-
-                    <div className="flex items-center gap-2.5 text-[11px] text-muted-foreground pl-7">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" /> {tanggal(w.created_at)}
-                      </span>
-                      {w.hours && (
-                        <>
-                          <span>·</span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" /> {w.hours} jam kerja
-                          </span>
-                        </>
-                      )}
-                    </div>
+      {list.length === 0 ? (
+        <EmptyState icon={Coins} title="Belum ada upah" text="Upah tercatat setelah pengurus menyimpan upah untuk batch produksi." />
+      ) : (
+        <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          {list.map((w) => {
+            const title = (w.batch as unknown as { ide?: { title: string } } | null)?.ide?.title ?? "Produksi kerajinan";
+            return (
+              <li key={w.id} className="flex items-center justify-between gap-4 rounded-2xl border bg-card p-4">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-daun-muda text-hutan">
+                    <Factory className="size-5" aria-hidden />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-base font-bold text-tinta">{title}</p>
+                    <p className="flex flex-wrap items-center gap-x-3 text-sm text-muted-foreground">
+                      <span className="inline-flex items-center gap-1"><Calendar className="size-3.5" aria-hidden /> {tanggal(w.created_at)}</span>
+                      {w.hours ? <span className="inline-flex items-center gap-1"><Clock className="size-3.5" aria-hidden /> {w.hours} jam</span> : null}
+                    </p>
                   </div>
-
-                  <div className="text-right shrink-0">
-                    <span className="text-base font-extrabold text-emerald-700">
-                      +{rupiah(w.amount)}
-                    </span>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
+                </div>
+                <span className="shrink-0 text-lg font-extrabold tabular-nums text-tinta">{rupiah(w.amount)}</span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }

@@ -3,79 +3,66 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { Role } from "@/lib/types";
-import {
-  Home,
-  PlusCircle,
-  Boxes,
-  Lightbulb,
-  Menu,
-  Factory,
-  Coins,
-  Building2,
-} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { BOTTOM, activeHref } from "@/components/nav-items";
 
-// Pemetaan ikon untuk setiap rute navigasi
-const ICONS: Record<string, any> = {
-  "/beranda": Home,
-  "/setoran/baru": PlusCircle,
-  "/stok": Boxes,
-  "/ide": Lightbulb,
-  "/menu": Menu,
-  "/produksi": Factory,
-  "/upah": Coins,
-  "/admin": Building2,
-};
-
-const NAV: Record<Role, { href: string; label: string }[]> = {
-  pengurus: [
-    { href: "/beranda", label: "Beranda" },
-    { href: "/setoran/baru", label: "Setor" },
-    { href: "/stok", label: "Stok" },
-    { href: "/ide", label: "Ide" },
-    { href: "/menu", label: "Lainnya" },
-  ],
-  anggota: [
-    { href: "/beranda", label: "Beranda" },
-    { href: "/stok", label: "Stok" },
-    { href: "/ide", label: "Ide" },
-    { href: "/produksi", label: "Produksi" },
-    { href: "/upah", label: "Upah" },
-  ],
-  admin: [{ href: "/admin", label: "Mitra" }],
-};
-
+// Navigasi bawah untuk HP & tablet (disembunyikan di layar ≥ 1024px)
 export function BottomNav({ role }: { role: Role }) {
   const pathname = usePathname();
-  const navItems = NAV[role] || NAV.anggota;
+  const items = BOTTOM[role] ?? BOTTOM.anggota;
+  // Admin hanya punya satu halaman: tidak perlu navigasi bawah
+  if (items.length < 2) return null;
+  let active = activeHref(pathname, items.map((i) => i.href));
+  // Halaman di luar 5 tombol (kas, laporan, dll.) menyalakan "Lainnya"
+  if (!active && role === "pengurus") active = "/menu";
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 backdrop-blur-md shadow-lg">
-      <ul className="mx-auto flex max-w-xl items-center justify-around px-2 py-1.5">
-        {navItems.map((item) => {
-          const active =
-            pathname === item.href || pathname.startsWith(item.href + "/");
-          const IconComponent = ICONS[item.href] || Home;
-
+    <nav
+      aria-label="Navigasi bawah"
+      className="fixed inset-x-0 bottom-0 z-40 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden"
+    >
+      <ul
+        className="mx-auto grid max-w-2xl px-1"
+        style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
+      >
+        {items.map((item) => {
+          const on = item.href === active;
+          const Icon = item.icon;
+          if (item.primary) {
+            return (
+              <li key={item.href} className="flex justify-center">
+                <Link
+                  href={item.href}
+                  aria-current={on ? "page" : undefined}
+                  className="-mt-5 flex flex-col items-center gap-1 rounded-2xl pb-2"
+                >
+                  <span
+                    className={cn(
+                      "grid size-14 place-items-center rounded-full text-white shadow-lg shadow-hutan/30 ring-4 ring-background transition-colors",
+                      on ? "bg-tinta" : "bg-hutan",
+                    )}
+                  >
+                    <Icon className="size-6" aria-hidden />
+                  </span>
+                  <span className="text-sm font-semibold text-tinta">{item.label}</span>
+                </Link>
+              </li>
+            );
+          }
           return (
-            <li key={item.href} className="flex-1">
+            <li key={item.href}>
               <Link
                 href={item.href}
-                className={`group flex flex-col items-center justify-center py-1.5 transition-all ${
-                  active
-                    ? "text-emerald-700 font-bold"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
+                aria-current={on ? "page" : undefined}
+                className={cn(
+                  "flex flex-col items-center gap-1 rounded-xl pb-2 pt-2 text-sm",
+                  on ? "font-bold text-tinta" : "font-medium text-muted-foreground",
+                )}
               >
-                <div
-                  className={`relative rounded-xl p-1.5 transition-colors ${active ? "bg-emerald-50 text-emerald-700" : "group-hover:bg-muted"}`}
-                >
-                  <IconComponent
-                    className={`h-5 w-5 transition-transform ${active ? "scale-110" : ""}`}
-                  />
-                </div>
-                <span className="text-[10px] tracking-tight mt-0.5">
-                  {item.label}
+                <span className={cn("grid h-8 w-12 place-items-center rounded-full transition-colors", on && "bg-pucuk")}>
+                  <Icon className="size-5" aria-hidden />
                 </span>
+                {item.label}
               </Link>
             </li>
           );

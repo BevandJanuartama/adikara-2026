@@ -1,9 +1,10 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CircleCheck, ClipboardCheck, Coins, CirclePlay, Receipt, CircleX } from "lucide-react";
 import { requireMe } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { kg, rupiah } from "@/lib/format";
 import { ActionForm, Field } from "@/components/action-form";
+import { Badge, MoneyRow, PageHeader, Panel } from "@/components/kriya-ui";
 import { cancelBatch, finishBatch, payWages } from "@/lib/actions/ops";
 
 // FR25 catat hasil, FR26 upah anggota
@@ -14,7 +15,8 @@ export default async function BatchPage({ params }: { params: Promise<{ id: stri
   const { data: b } = await supabase
     .from("production_batches")
     .select("*, ide:ideas(id, title, labor_cost)")
-    .eq("id", id).maybeSingle();
+    .eq("id", id)
+    .maybeSingle();
   if (!b) notFound();
 
   const assigned: string[] = b.assigned_members ?? [];
@@ -28,54 +30,75 @@ export default async function BatchPage({ params }: { params: Promise<{ id: stri
   const units = b.status === "done" ? b.qty_done + b.qty_failed : b.qty_planned;
   const suggested = assigned.length ? Math.round((Number(ide.labor_cost) * units) / assigned.length) : 0;
   const totalCost = Number(b.material_value) + Number(b.extra_cost_total) + Number(b.tool_cost_total) + Number(b.wage_total);
+  const paid = (wages ?? []).reduce((s, w) => s + Number(w.amount), 0);
+  const status =
+    b.status === "running"
+      ? { label: "Berjalan", tone: "mentega" as const, icon: CirclePlay }
+      : b.status === "done"
+        ? { label: "Selesai", tone: "pucuk" as const, icon: CircleCheck }
+        : { label: "Batal", tone: "bata" as const, icon: CircleX };
 
   return (
-    <div className="space-y-5">
-      <div>
-        <Link href={`/ide/${ide.id}`} className="text-base underline">← {ide.title}</Link>
-        <h1 className="text-2xl font-bold">Batch {b.status === "running" ? "berjalan" : b.status === "done" ? "selesai" : "batal"}</h1>
-        <p className="text-base">Rencana {b.qty_planned} unit{b.status === "done" && ` · jadi ${b.qty_done} · gagal ${b.qty_failed}`}</p>
+    <div className="space-y-6">
+      <PageHeader back={{ href: "/produksi", label: "Produksi" }} title={ide.title} description={`Batch ${b.qty_planned} unit`} />
+
+      <div className="flex flex-wrap gap-2">
+        <Badge tone={status.tone} icon={status.icon}>{status.label}</Badge>
+        {b.status === "done" && <Badge tone="sage">Jadi {b.qty_done}, gagal {b.qty_failed}</Badge>}
       </div>
 
-      <section className="rounded-xl border p-4 text-base">
-        <h2 className="mb-2 text-lg font-semibold">Bahan terpakai & biaya</h2>
-        {(b.materials_used as { item_type: string; kg: number; value: number }[]).map((m) => (
-          <p key={m.item_type} className="flex justify-between"><span>{m.item_type} {kg(m.kg)}</span><span>{rupiah(m.value)}</span></p>
-        ))}
-        <p className="flex justify-between"><span>Bahan tambahan</span><span>{rupiah(b.extra_cost_total)}</span></p>
-        <p className="flex justify-between"><span>Porsi alat</span><span>{rupiah(b.tool_cost_total)}</span></p>
-        <p className="flex justify-between"><span>Upah</span><span>{rupiah(b.wage_total)}</span></p>
-        <p className="flex justify-between font-bold"><span>Total biaya</span><span>{rupiah(totalCost)}</span></p>
-      </section>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_23rem] xl:items-start">
+        <Panel title="Bahan terpakai dan biaya" icon={Receipt}>
+          <div className="divide-y">
+            {(b.materials_used as { item_type: string; kg: number; value: number }[]).map((m) => (
+              <MoneyRow key={m.item_type} label={`${m.item_type} (${kg(m.kg)})`} value={rupiah(m.value)} />
+            ))}
+            <MoneyRow label="Bahan tambahan" value={rupiah(b.extra_cost_total)} />
+            <MoneyRow label="Porsi alat" value={rupiah(b.tool_cost_total)} />
+            <MoneyRow label="Upah tercatat" value={rupiah(b.wage_total)} />
+            <MoneyRow label="Total biaya" value={rupiah(totalCost)} strong />
+          </div>
+        </Panel>
 
-      {canFinish && (
-        <ActionForm action={finishBatch.bind(null, id)} submitLabel="✔ Catat hasil produksi" className="space-y-3 rounded-xl border p-4">
-          <h2 className="text-lg font-semibold">Catat hasil</h2>
-          <Field label="Jumlah jadi" name="done" type="number" min={0} max={b.qty_planned} defaultValue={b.qty_planned} />
-          <Field label="Jumlah gagal" name="failed" type="number" min={0} max={b.qty_planned} defaultValue={0} />
-        </ActionForm>
-      )}
-
-      {isPengurus && b.status !== "cancelled" && (
-        <ActionForm action={payWages.bind(null, id)} submitLabel="Catat upah" variant="secondary" className="space-y-3 rounded-xl border p-4">
-          <h2 className="text-lg font-semibold">Upah anggota</h2>
-          {(wages ?? []).length > 0 && (
-            <p className="text-sm text-muted-foreground">Sudah dicatat: {rupiah((wages ?? []).reduce((s, w) => s + Number(w.amount), 0))}</p>
+        <div className="space-y-6">
+          {canFinish && (
+            <Panel title="Catat hasil" description="Unit gagal tetap dihitung sebagai biaya." icon={ClipboardCheck}>
+              <ActionForm action={finishBatch.bind(null, id)} submitLabel="Simpan hasil produksi">
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Jumlah jadi" name="done" type="number" min={0} max={b.qty_planned} defaultValue={b.qty_planned} />
+                  <Field label="Jumlah gagal" name="failed" type="number" min={0} max={b.qty_planned} defaultValue={0} />
+                </div>
+              </ActionForm>
+            </Panel>
           )}
-          {(members ?? []).map((m) => (
-            <div key={m.id} className="grid grid-cols-2 gap-2">
-              <input type="hidden" name="member_id" value={m.id} />
-              <p className="col-span-2 text-base font-semibold">{m.full_name}</p>
-              <Field label="Jam kerja" name={`hours_${m.id}`} type="number" step="0.5" required={false} />
-              <Field label="Upah (Rp)" name={`amount_${m.id}`} type="number" defaultValue={suggested} />
-            </div>
-          ))}
-        </ActionForm>
-      )}
 
-      {isPengurus && b.status === "running" && (
-        <ActionForm action={cancelBatch.bind(null, id)} submitLabel="Batalkan batch (bahan kembali ke stok)" variant="outline" />
-      )}
+          {isPengurus && b.status !== "cancelled" && (
+            <Panel
+              title="Upah anggota"
+              description={paid > 0 ? `Sudah tercatat ${rupiah(paid)}` : "Saran upah dihitung dari estimasi ide."}
+              icon={Coins}
+            >
+              <ActionForm action={payWages.bind(null, id)} submitLabel="Catat upah" variant="secondary">
+                {(members ?? []).map((m) => (
+                  <fieldset key={m.id} className="rounded-xl bg-daun-muda/60 p-3">
+                    <legend className="sr-only">{m.full_name}</legend>
+                    <input type="hidden" name="member_id" value={m.id} />
+                    <p className="mb-2 text-base font-semibold text-tinta">{m.full_name}</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Field label="Jam kerja" name={`hours_${m.id}`} type="number" step="0.5" required={false} />
+                      <Field label="Upah (Rp)" name={`amount_${m.id}`} type="number" defaultValue={suggested} />
+                    </div>
+                  </fieldset>
+                ))}
+              </ActionForm>
+            </Panel>
+          )}
+
+          {isPengurus && b.status === "running" && (
+            <ActionForm action={cancelBatch.bind(null, id)} submitLabel="Batalkan batch, bahan kembali ke stok" variant="destructive" />
+          )}
+        </div>
+      </div>
     </div>
   );
 }

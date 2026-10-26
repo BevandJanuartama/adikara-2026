@@ -1,52 +1,36 @@
 "use client";
 
 import { useState } from "react";
+import {
+  Banknote,
+  Camera,
+  Check,
+  CircleCheck,
+  ChevronDown,
+  ImageOff,
+  Plus,
+  RotateCcw,
+  Scale,
+  Sparkles,
+  Trash2,
+  UserPlus,
+  Wallet,
+  CircleX,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { compressImage, randomName } from "@/lib/image";
 import { depositSubtotal } from "@/lib/calc";
 import { parseDecimal, rupiah } from "@/lib/format";
 import type { Condition } from "@/lib/types";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  approveDeposit,
-  cancelDeposit,
-  createDeposit,
-  createResident,
-} from "../actions";
-import {
-  Camera,
-  UserPlus,
-  Scale,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-  Trash2,
-  Plus,
-  ArrowRight,
-  RotateCcw,
-  Wallet,
-  Banknote,
-} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Badge, Notice, PageHeader, Panel, btn, inputClass, labelClass } from "@/components/kriya-ui";
+import { approveDeposit, cancelDeposit, createDeposit, createResident } from "../actions";
 
 type Resident = { id: string; name: string; balance: number };
 type Price = { item_type: string; price_per_kg: number };
-type Row = {
-  item_type: string;
-  condition: Condition;
-  is_eligible: boolean;
-  weight: string;
-  ai_suggested: boolean;
-  reason?: string;
-};
+type Row = { item_type: string; condition: Condition; is_eligible: boolean; weight: string; ai_suggested: boolean; reason?: string };
 type ScanResponse = {
-  items: {
-    item_type: string;
-    condition: Condition;
-    is_eligible: boolean;
-    reason: string;
-  }[];
+  items: { item_type: string; condition: Condition; is_eligible: boolean; reason: string }[];
   note?: string;
   hash?: string;
   cached?: boolean;
@@ -54,18 +38,10 @@ type ScanResponse = {
   manual?: boolean;
 };
 
-const selectClass =
-  "h-12 w-full rounded-xl border border-input bg-background px-3 text-base shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+const STEPS = ["Warga & foto", "Cek & timbang", "Persetujuan"];
 
-export function DepositWizard({
-  groupId,
-  residents: initial,
-  prices,
-}: {
-  groupId: string;
-  residents: Resident[];
-  prices: Price[];
-}) {
+// Alur setoran 3 langkah (NFR12): 1) warga + foto  2) cek hasil AI & timbang  3) persetujuan warga
+export function DepositWizard({ groupId, residents: initial, prices }: { groupId: string; residents: Resident[]; prices: Price[] }) {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [residents, setResidents] = useState(initial);
   const [residentId, setResidentId] = useState("");
@@ -75,32 +51,17 @@ export function DepositWizard({
   const [preview, setPreview] = useState<string | null>(null);
   const [scan, setScan] = useState<ScanResponse | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
-  const [deposit, setDeposit] = useState<{
-    depositId: string;
-    total: number;
-  } | null>(null);
+  const [deposit, setDeposit] = useState<{ depositId: string; total: number } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [doneText, setDoneText] = useState("");
 
   const resident = residents.find((r) => r.id === residentId);
-  const priceOf = (t: string) =>
-    prices.find((p) => p.item_type === t)?.price_per_kg ?? 0;
-  const subtotal = (r: Row) =>
-    depositSubtotal(
-      parseDecimal(r.weight),
-      priceOf(r.item_type),
-      r.is_eligible,
-    );
+  const priceOf = (t: string) => prices.find((p) => p.item_type === t)?.price_per_kg ?? 0;
+  const subtotal = (r: Row) => depositSubtotal(parseDecimal(r.weight), priceOf(r.item_type), r.is_eligible);
   const estimate = rows.reduce((s, r) => s + subtotal(r), 0);
-  const blankRow = (): Row => ({
-    item_type: prices[0]?.item_type ?? "",
-    condition: "bersih",
-    is_eligible: true,
-    weight: "",
-    ai_suggested: false,
-  });
+  const blankRow = (): Row => ({ item_type: prices[0]?.item_type ?? "", condition: "bersih", is_eligible: true, weight: "", ai_suggested: false });
 
   function reset() {
     setStep(1);
@@ -114,32 +75,30 @@ export function DepositWizard({
     setNotice(null);
   }
 
+  // FR14: warga baru langsung dari form setoran
   async function addResident() {
     setError(null);
     if (!newName.trim()) return setError("Nama warga wajib diisi.");
     const res = await createResident({ name: newName, phone: newPhone });
     if (!res.ok) return setError(res.error);
-    setResidents((list) =>
-      [...list, res.data].sort((a, b) => a.name.localeCompare(b.name)),
-    );
+    setResidents((list) => [...list, res.data].sort((a, b) => a.name.localeCompare(b.name)));
     setResidentId(res.data.id);
     setNewName("");
     setNewPhone("");
   }
 
+  // FR07–FR08: kompres → unggah ke Storage → scan AI
   async function onPhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setError(null);
     setNotice(null);
     try {
-      setBusy("Mengompres & mengunggah foto…");
+      setBusy("Mengompres dan mengunggah foto…");
       const blob = await compressImage(file);
       setPreview(URL.createObjectURL(blob));
       const path = `${groupId}/deposits/${randomName()}.jpg`;
-      const { error: upErr } = await createClient()
-        .storage.from("photos")
-        .upload(path, blob, { contentType: "image/jpeg" });
+      const { error: upErr } = await createClient().storage.from("photos").upload(path, blob, { contentType: "image/jpeg" });
       if (upErr) throw new Error(`Gagal mengunggah foto: ${upErr.message}`);
       setPhotoPath(path);
 
@@ -151,9 +110,8 @@ export function DepositWizard({
       });
       const json = (await res.json()) as ScanResponse;
       if (!res.ok || !json.items?.length) {
-        setNotice(
-          json.error ?? "AI tidak menemukan barang. Silakan isi manual.",
-        );
+        // FR34: AI gagal / kuota habis → tetap jalan secara manual
+        setNotice(json.error ?? "AI tidak menemukan barang. Silakan isi manual.");
         setRows([blankRow()]);
       } else {
         setScan(json);
@@ -179,13 +137,10 @@ export function DepositWizard({
   }
 
   function updateRow(i: number, patch: Partial<Row>) {
-    setRows((list) =>
-      list.map((r, idx) =>
-        idx === i ? { ...r, ...patch, ai_suggested: false } : r,
-      ),
-    );
+    setRows((list) => list.map((r, idx) => (idx === i ? { ...r, ...patch, ai_suggested: false } : r))); // FR09: koreksi manual menang
   }
 
+  // FR10: simpan draft → total resmi dari database
   async function submitDraft() {
     setError(null);
     setBusy("Menghitung taksiran…");
@@ -193,9 +148,7 @@ export function DepositWizard({
       residentId,
       photoPath,
       photoHash: scan?.hash ?? null,
-      aiResult: scan
-        ? { items: scan.items, cached: scan.cached ?? false }
-        : null,
+      aiResult: scan ? { items: scan.items, cached: scan.cached ?? false } : null,
       items: rows.map((r) => ({
         item_type: r.item_type,
         condition: r.condition,
@@ -211,14 +164,12 @@ export function DepositWizard({
     setStep(3);
   }
 
+  // FR11–FR12
   async function decide(action: "saldo" | "tunai" | "batal") {
     if (!deposit) return;
     setError(null);
     setBusy("Menyimpan…");
-    const res =
-      action === "batal"
-        ? await cancelDeposit(deposit.depositId)
-        : await approveDeposit(deposit.depositId, action === "tunai");
+    const res = action === "batal" ? await cancelDeposit(deposit.depositId) : await approveDeposit(deposit.depositId, action === "tunai");
     setBusy(null);
     if (!res.ok) return setError(res.error);
     setDoneText(
@@ -231,487 +182,307 @@ export function DepositWizard({
     setStep(4);
   }
 
-  return (
-    <div className="mx-auto max-w-xl space-y-6 pb-12">
-      {/* Header & Progress Indicator */}
-      <div className="flex items-center justify-between border-b pb-4">
+  const summary = (
+    <Panel title="Ringkasan setoran" icon={Scale}>
+      <dl className="space-y-3 text-base">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Catat Setoran Sampah
-          </h1>
-          <p className="text-xs text-muted-foreground">
-            Kelola setoran anorganik warga dengan mudah
-          </p>
+          <dt className="text-sm text-muted-foreground">Warga</dt>
+          <dd className="font-semibold text-tinta">{resident?.name ?? "Belum dipilih"}</dd>
         </div>
-        {step < 4 && (
-          <div className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-            <span>Langkah {Math.min(step, 3)} dari 3</span>
-          </div>
-        )}
+        <div>
+          <dt className="text-sm text-muted-foreground">Barang</dt>
+          <dd className="text-tinta">
+            {rows.length === 0 ? (
+              "Belum ada"
+            ) : (
+              <ul className="mt-1 space-y-1">
+                {rows.map((r, i) => (
+                  <li key={i} className="flex justify-between gap-3">
+                    <span className="min-w-0 truncate">{r.item_type} {r.weight ? `${r.weight} kg` : ""}</span>
+                    <span className="shrink-0 tabular-nums">{rupiah(subtotal(r))}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </dd>
+        </div>
+      </dl>
+      <div className="jahitan mt-5 rounded-xl bg-mentega p-4">
+        <p className="text-sm font-semibold text-mentega-ink">{deposit ? "Total resmi" : "Taksiran sementara"}</p>
+        <p className="mt-1 text-2xl font-extrabold tabular-nums text-tinta">{rupiah(deposit?.total ?? estimate)}</p>
       </div>
+    </Panel>
+  );
 
-      {/* Alert Notices */}
-      {busy && (
-        <div className="flex items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50/80 p-4 text-blue-900 shadow-xs animate-pulse">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-          <p className="text-sm font-medium">{busy}</p>
-        </div>
-      )}
-      {error && (
-        <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-red-800 shadow-xs">
-          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
-          <p className="text-sm font-medium">{error}</p>
-        </div>
-      )}
-      {notice && (
-        <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-900 shadow-xs">
-          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
-          <p className="text-sm font-medium">{notice}</p>
-        </div>
-      )}
+  return (
+    <div className="space-y-6">
+      <PageHeader title="Catat setoran" description="Pilih warga, foto barangnya, timbang, lalu minta persetujuan warga." />
 
-      {/* STEP 1: Pilih Warga & Foto */}
-      {step === 1 && (
-        <div className="space-y-6">
-          <div className="rounded-2xl border bg-card p-5 shadow-xs space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="warga" className="text-base font-bold">
-                1. Pilih Warga Penyetor
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Cari atau pilih nama warga yang mendatangkan sampah.
-              </p>
-            </div>
-
-            <select
-              id="warga"
-              className={selectClass}
-              value={residentId}
-              onChange={(e) => setResidentId(e.target.value)}
-            >
-              <option value="">— Pilih Warga —</option>
-              {residents.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name} (Saldo: {rupiah(r.balance)})
-                </option>
-              ))}
-            </select>
-
-            <details className="group rounded-xl border bg-muted/30 p-3.5 transition-all">
-              <summary className="flex cursor-pointer items-center justify-between font-semibold text-sm text-foreground">
-                <span className="flex items-center gap-2">
-                  <UserPlus className="h-4 w-4 text-emerald-600" /> Belum
-                  terdaftar? Tambah Warga Baru
-                </span>
-                <span className="text-xs text-muted-foreground group-open:rotate-180 transition-transform">
-                  ▼
-                </span>
-              </summary>
-              <div className="mt-3.5 space-y-3 pt-3 border-t">
-                <div className="space-y-1">
-                  <Label className="text-xs">Nama Lengkap</Label>
-                  <Input
-                    placeholder="Contoh: Ibu Siti"
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    className="h-11 text-base"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Nomor HP (Opsional)</Label>
-                  <Input
-                    placeholder="08xxxxxxxxxx"
-                    inputMode="tel"
-                    value={newPhone}
-                    onChange={(e) => setNewPhone(e.target.value)}
-                    className="h-11 text-base"
-                  />
-                </div>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={addResident}
-                  className="w-full h-11 text-sm font-semibold"
+      {step < 4 && (
+        <ol className="grid grid-cols-3 gap-2" aria-label="Langkah setoran">
+          {STEPS.map((label, i) => {
+            const n = i + 1;
+            const done = step > n;
+            const now = step === n;
+            return (
+              <li
+                key={label}
+                aria-current={now ? "step" : undefined}
+                className={cn(
+                  "flex flex-col items-start gap-2 rounded-xl border px-3 py-2.5 sm:flex-row sm:items-center",
+                  now ? "border-hutan bg-card" : "bg-card/60",
+                )}
+              >
+                <span
+                  className={cn(
+                    "grid size-8 shrink-0 place-items-center rounded-full text-sm font-bold",
+                    done ? "bg-hutan text-white" : now ? "bg-mentega text-tinta" : "bg-muted text-muted-foreground",
+                  )}
                 >
-                  Simpan Warga Baru
-                </Button>
-              </div>
-            </details>
-          </div>
-
-          <div
-            className={`space-y-4 rounded-2xl border bg-card p-5 shadow-xs transition-opacity ${residentId ? "" : "pointer-events-none opacity-40"}`}
-          >
-            <div className="space-y-1.5">
-              <Label className="text-base font-bold">
-                2. Ambil Foto Sampah
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Gunakan kamera untuk mendeteksi otomatis jenis barang dengan AI.
-              </p>
-            </div>
-
-            <label
-              htmlFor="foto"
-              className="flex h-40 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-emerald-300 bg-emerald-50/50 hover:bg-emerald-50 text-emerald-800 transition-colors"
-            >
-              <div className="rounded-full bg-emerald-100 p-3 text-emerald-700 shadow-xs">
-                <Camera className="h-7 w-7" />
-              </div>
-              <span className="text-base font-bold">
-                Ambil Foto dengan Kamera
-              </span>
-              <span className="text-xs text-muted-foreground">
-                Ketuk untuk membuka kamera ponsel
-              </span>
-            </label>
-            <input
-              id="foto"
-              type="file"
-              accept="image/*"
-              capture="environment"
-              className="hidden"
-              onChange={onPhoto}
-              disabled={!!busy}
-            />
-
-            <div className="relative flex py-1 items-center">
-              <div className="flex-grow border-t border-muted"></div>
-              <span className="flex-shrink mx-4 text-xs text-muted-foreground uppercase tracking-wider">
-                Atau
-              </span>
-              <div className="flex-grow border-t border-muted"></div>
-            </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              className="h-12 w-full text-base font-medium"
-              onClick={() => {
-                setRows([blankRow()]);
-                setStep(2);
-              }}
-            >
-              Isi Manual Tanpa Foto
-            </Button>
-          </div>
-        </div>
+                  {done ? <Check className="size-4" aria-hidden /> : n}
+                </span>
+                <span className={cn("text-sm font-semibold leading-tight", now || done ? "text-tinta" : "text-muted-foreground")}>{label}</span>
+              </li>
+            );
+          })}
+        </ol>
       )}
 
-      {/* STEP 2: Cek AI & Timbang Berat */}
-      {step === 2 && (
-        <div className="space-y-5">
-          {preview && (
-            <div className="overflow-hidden rounded-2xl border shadow-xs">
-              <img
-                src={preview}
-                alt="Foto setoran"
-                className="max-h-56 w-full object-cover"
-              />
+      {busy && (
+        <div role="status" className="flex items-center gap-3 rounded-xl bg-daun-muda px-4 py-3 text-base text-tinta">
+          <span className="size-5 animate-spin rounded-full border-2 border-hutan border-t-transparent" aria-hidden />
+          {busy}
+        </div>
+      )}
+      {error && <Notice tone="error">{error}</Notice>}
+      {notice && <Notice tone="warning">{notice}</Notice>}
+
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_21rem] xl:items-start">
+        <div className="min-w-0 space-y-6">
+          {/* LANGKAH 1 */}
+          {step === 1 && (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <Panel title="Warga penyetor" description="Pilih nama warga yang membawa barang.">
+                <div className="space-y-4">
+                  <label className="block space-y-1.5">
+                    <span className={labelClass}>Nama warga</span>
+                    <select className={inputClass} value={residentId} onChange={(e) => setResidentId(e.target.value)}>
+                      <option value="">Pilih warga</option>
+                      {residents.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.name} (saldo {rupiah(r.balance)})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <details className="group rounded-xl border bg-daun-muda/50">
+                    <summary className="flex cursor-pointer items-center justify-between gap-2 px-4 py-3 text-base font-semibold text-tinta">
+                      <span className="flex items-center gap-2"><UserPlus className="size-5 text-hutan" /> Tambah warga baru</span>
+                      <ChevronDown className="size-5 transition-transform group-open:rotate-180" />
+                    </summary>
+                    <div className="space-y-3 border-t px-4 py-4">
+                      <label className="block space-y-1.5">
+                        <span className={labelClass}>Nama lengkap</span>
+                        <input className={inputClass} placeholder="Contoh: Bu Siti" value={newName} onChange={(e) => setNewName(e.target.value)} />
+                      </label>
+                      <label className="block space-y-1.5">
+                        <span className={labelClass}>Nomor HP <span className="font-normal text-muted-foreground">(opsional)</span></span>
+                        <input className={inputClass} inputMode="tel" placeholder="08xxxxxxxxxx" value={newPhone} onChange={(e) => setNewPhone(e.target.value)} />
+                      </label>
+                      <button type="button" onClick={addResident} className={cn(btn.secondary, "w-full")}>Simpan warga</button>
+                    </div>
+                  </details>
+                </div>
+              </Panel>
+
+              <Panel
+                title="Foto barang"
+                description="AI mengenali jenis dan kondisi barang dari foto."
+                className={cn("transition-opacity", !residentId && "pointer-events-none opacity-50")}
+              >
+                <div className="space-y-4">
+                  <label
+                    htmlFor="foto"
+                    className="jahitan flex h-44 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl bg-pucuk/70 text-tinta transition-colors hover:bg-pucuk"
+                  >
+                    <span className="grid size-14 place-items-center rounded-full bg-card shadow-sm">
+                      <Camera className="size-7 text-hutan" />
+                    </span>
+                    <span className="text-lg font-bold">Ambil foto</span>
+                    <span className="text-sm text-tinta/80">{residentId ? "Ketuk untuk membuka kamera" : "Pilih warga dulu"}</span>
+                  </label>
+                  <input id="foto" type="file" accept="image/*" capture="environment" className="sr-only" onChange={onPhoto} disabled={!!busy || !residentId} />
+                  <button
+                    type="button"
+                    className={cn(btn.outline, "w-full")}
+                    onClick={() => {
+                      setRows([blankRow()]);
+                      setStep(2);
+                    }}
+                  >
+                    <ImageOff /> Isi manual tanpa foto
+                  </button>
+                </div>
+              </Panel>
             </div>
           )}
 
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-bold">
-                Periksa Barang & Masukkan Berat
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                Sesuaikan hasil deteksi AI dengan timbangan di posko.
-              </p>
-            </div>
-            <div className="rounded-lg bg-emerald-100 p-2 text-emerald-800">
-              <Scale className="h-5 w-5" />
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            {rows.map((r, i) => {
-              const currentSubtotal = subtotal(r);
-              return (
-                <div
-                  key={i}
-                  className="space-y-3 rounded-2xl border bg-card p-4 shadow-xs"
-                >
-                  <div className="flex items-center justify-between border-b pb-2.5">
-                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold">
-                      {r.ai_suggested ? (
-                        <span className="rounded-md bg-blue-100 px-2 py-0.5 text-blue-800">
-                          ✨ Saran AI
-                        </span>
-                      ) : (
-                        <span className="rounded-md bg-muted px-2 py-0.5 text-muted-foreground">
-                          ✏️ Manual / Koreksi
-                        </span>
-                      )}
-                      {r.reason && (
-                        <span className="text-muted-foreground font-normal">
-                          · {r.reason}
-                        </span>
-                      )}
-                    </span>
-                    <button
-                      type="button"
-                      className="flex items-center gap-1 text-xs font-bold text-red-600 hover:text-red-700"
-                      onClick={() =>
-                        setRows(rows.filter((_, idx) => idx !== i))
-                      }
-                    >
-                      <Trash2 className="h-3.5 w-3.5" /> Hapus
-                    </button>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium text-muted-foreground">
-                      Jenis Barang
-                    </Label>
-                    <select
-                      className={selectClass}
-                      value={r.item_type}
-                      onChange={(e) =>
-                        updateRow(i, { item_type: e.target.value })
-                      }
-                    >
-                      {prices.map((p) => (
-                        <option key={p.item_type} value={p.item_type}>
-                          {p.item_type} — {rupiah(p.price_per_kg)}/kg
-                        </option>
-                      ))}
-                      {!prices.some((p) => p.item_type === r.item_type) && (
-                        <option value={r.item_type}>
-                          {r.item_type} (Tidak ada di tabel harga)
-                        </option>
-                      )}
-                    </select>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <Label className="text-xs font-medium text-muted-foreground">
-                        Kondisi
-                      </Label>
-                      <select
-                        className={selectClass}
-                        value={r.condition}
-                        onChange={(e) =>
-                          updateRow(i, {
-                            condition: e.target.value as Condition,
-                          })
-                        }
-                      >
-                        <option value="bersih">Bersih</option>
-                        <option value="kotor">Kotor</option>
-                        <option value="rusak">Rusak</option>
-                      </select>
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs font-medium text-muted-foreground">
-                        Berat Timbangan
-                      </Label>
-                      <div className="relative">
-                        <Input
-                          inputMode="decimal"
-                          placeholder="0.0"
-                          value={r.weight}
-                          onChange={(e) =>
-                            updateRow(i, { weight: e.target.value })
-                          }
-                          className="h-12 pr-12 text-base font-bold"
-                        />
-                        <span className="absolute right-3 top-3.5 text-sm text-muted-foreground font-semibold">
-                          kg
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-2">
-                    <label className="flex items-center gap-2.5 text-sm font-medium cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="size-4 rounded border-gray-300 text-primary accent-primary"
-                        checked={r.is_eligible}
-                        onChange={(e) =>
-                          updateRow(i, { is_eligible: e.target.checked })
-                        }
-                      />
-                      <span>Layak Diterima</span>
-                    </label>
-                    {!r.is_eligible && (
-                      <span className="text-xs font-bold text-red-600">
-                        Dinilai Rp0 (Tidak Layak)
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between border-t pt-2.5 text-sm">
-                    <span className="text-muted-foreground">
-                      Subtotal Nilai:
-                    </span>
-                    <span className="font-bold text-emerald-700 text-base">
-                      {rupiah(currentSubtotal)}
-                    </span>
-                  </div>
+          {/* LANGKAH 2 */}
+          {step === 2 && (
+            <>
+              {preview && (
+                <div className="overflow-hidden rounded-2xl border bg-card">
+                  <img src={preview} alt="Foto setoran" className="max-h-72 w-full object-cover" />
                 </div>
-              );
-            })}
-          </div>
+              )}
 
-          <Button
-            type="button"
-            variant="outline"
-            className="h-12 w-full border-dashed gap-2 text-base font-semibold"
-            onClick={() => setRows([...rows, blankRow()])}
-          >
-            <Plus className="h-4 w-4" /> Tambah Jenis Barang Lain
-          </Button>
+              <div className="space-y-3">
+                {rows.map((r, i) => (
+                  <div key={i} className="rounded-2xl border bg-card p-4 sm:p-5">
+                    <div className="mb-4 flex items-start justify-between gap-2">
+                      <div className="flex min-w-0 flex-wrap items-center gap-2 pt-1.5">
+                        {r.ai_suggested ? <Badge tone="pucuk" icon={Sparkles}>Saran AI</Badge> : <Badge>Diisi manual</Badge>}
+                        {r.reason && <span className="text-sm text-muted-foreground">{r.reason}</span>}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setRows(rows.filter((_, idx) => idx !== i))}
+                        className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-bata-ink hover:bg-bata-soft"
+                      >
+                        <Trash2 className="size-4" /> Hapus
+                      </button>
+                    </div>
 
-          {/* Kartu Total Taksiran */}
-          <div className="rounded-2xl border bg-emerald-900 p-5 text-white shadow-md flex items-center justify-between">
-            <div>
-              <p className="text-xs text-emerald-200">
-                Total Taksiran Harga Setoran
-              </p>
-              <p className="text-2xl font-bold tracking-tight">
-                {rupiah(estimate)}
-              </p>
-            </div>
-            <div className="rounded-xl bg-white/10 p-3 backdrop-blur-md">
-              <Wallet className="h-6 w-6 text-emerald-200" />
-            </div>
-          </div>
+                    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                      <label className="col-span-2 block space-y-1.5">
+                        <span className={labelClass}>Jenis barang</span>
+                        <select className={inputClass} value={r.item_type} onChange={(e) => updateRow(i, { item_type: e.target.value })}>
+                          {prices.map((p) => (
+                            <option key={p.item_type} value={p.item_type}>
+                              {p.item_type} ({rupiah(p.price_per_kg)}/kg)
+                            </option>
+                          ))}
+                          {!prices.some((p) => p.item_type === r.item_type) && (
+                            <option value={r.item_type}>{r.item_type} (tidak ada di tabel harga)</option>
+                          )}
+                        </select>
+                      </label>
+                      <label className="block space-y-1.5">
+                        <span className={labelClass}>Kondisi</span>
+                        <select className={inputClass} value={r.condition} onChange={(e) => updateRow(i, { condition: e.target.value as Condition })}>
+                          <option value="bersih">Bersih</option>
+                          <option value="kotor">Kotor</option>
+                          <option value="rusak">Rusak</option>
+                        </select>
+                      </label>
+                      <label className="block space-y-1.5">
+                        <span className={labelClass}>Berat timbangan</span>
+                        <span className="relative block">
+                          <input
+                            inputMode="decimal"
+                            placeholder="0,0"
+                            value={r.weight}
+                            onChange={(e) => updateRow(i, { weight: e.target.value })}
+                            className={cn(inputClass, "pr-12 font-bold")}
+                          />
+                          <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-sm font-semibold text-muted-foreground">kg</span>
+                        </span>
+                      </label>
+                    </div>
 
-          <div className="grid grid-cols-2 gap-3 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="h-13 text-base font-semibold gap-2"
-              onClick={() => setStep(1)}
-            >
-              <RotateCcw className="h-4 w-4" /> Kembali
-            </Button>
-            <Button
-              type="button"
-              className="h-13 text-base font-bold gap-2 bg-emerald-700 hover:bg-emerald-800 text-white"
-              disabled={!rows.length || !!busy}
-              onClick={submitDraft}
-            >
-              Lanjut ke Persetujuan <ArrowRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* STEP 3: Persetujuan Warga */}
-      {step === 3 && deposit && (
-        <div className="space-y-5">
-          <div className="rounded-2xl border bg-card p-5 shadow-xs space-y-4">
-            <div className="space-y-1">
-              <h2 className="text-lg font-bold">Konfirmasi dengan Warga</h2>
-              <p className="text-xs text-muted-foreground">
-                Tunjukkan rincian ini kepada penyetor:{" "}
-                <span className="font-bold text-foreground">
-                  {resident?.name}
-                </span>
-              </p>
-            </div>
-
-            <ul className="divide-y rounded-xl border bg-muted/20">
-              {rows.map((r, i) => (
-                <li
-                  key={i}
-                  className="flex items-center justify-between p-3.5 text-sm"
-                >
-                  <div>
-                    <p className="font-semibold">
-                      {r.item_type}{" "}
-                      <span className="text-xs font-normal text-muted-foreground">
-                        ({r.condition})
-                      </span>
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {r.weight} kg {!r.is_eligible && "· (Tidak Layak)"}
-                    </p>
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+                      <label className="flex cursor-pointer items-center gap-2.5 text-base font-medium text-tinta">
+                        <input type="checkbox" className="size-5 accent-hutan" checked={r.is_eligible} onChange={(e) => updateRow(i, { is_eligible: e.target.checked })} />
+                        Layak diterima
+                        {!r.is_eligible && <span className="text-sm font-semibold text-bata-ink">(dinilai Rp0)</span>}
+                      </label>
+                      <p className="text-base text-muted-foreground">
+                        Subtotal <span className="ml-1 text-lg font-bold tabular-nums text-tinta">{rupiah(subtotal(r))}</span>
+                      </p>
+                    </div>
                   </div>
-                  <span className="font-bold text-emerald-700">
-                    {rupiah(subtotal(r))}
-                  </span>
-                </li>
-              ))}
-            </ul>
+                ))}
+              </div>
 
-            <div className="flex items-center justify-between border-t pt-3">
-              <span className="text-base font-bold">Total Diterima Warga</span>
-              <span className="text-2xl font-extrabold text-emerald-700">
-                {rupiah(deposit.total)}
+              <button type="button" className={cn(btn.outline, "w-full border-dashed")} onClick={() => setRows([...rows, blankRow()])}>
+                <Plus /> Tambah jenis barang
+              </button>
+
+              <div className="jahitan flex items-center justify-between gap-4 rounded-2xl bg-mentega p-5 xl:hidden">
+                <div>
+                  <p className="text-sm font-semibold text-mentega-ink">Taksiran sementara</p>
+                  <p className="text-2xl font-extrabold tabular-nums text-tinta">{rupiah(estimate)}</p>
+                </div>
+                <Wallet className="size-7 text-mentega-ink" aria-hidden />
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-[auto_minmax(0,1fr)]">
+                <button type="button" className={btn.outline} onClick={() => setStep(1)}>
+                  <RotateCcw /> Kembali
+                </button>
+                <button type="button" className={btn.primary} disabled={!rows.length || !!busy} onClick={submitDraft}>
+                  Lanjut ke persetujuan
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* LANGKAH 3 */}
+          {step === 3 && deposit && (
+            <>
+              <Panel title={`Tunjukkan ke ${resident?.name ?? "warga"}`} description="Bacakan rincian dan total sebelum warga memutuskan.">
+                <ul className="divide-y">
+                  {rows.map((r, i) => (
+                    <li key={i} className="flex items-start justify-between gap-4 py-3 first:pt-0">
+                      <div>
+                        <p className="text-base font-semibold text-tinta">{r.item_type}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {r.weight} kg, {r.condition}
+                          {!r.is_eligible && ", tidak layak"}
+                        </p>
+                      </div>
+                      <span className="text-base font-bold tabular-nums text-tinta">{rupiah(subtotal(r))}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="jahitan mt-4 flex items-center justify-between gap-4 rounded-xl bg-pucuk p-4">
+                  <span className="text-base font-bold text-tinta">Total untuk warga</span>
+                  <span className="text-2xl font-extrabold tabular-nums text-tinta sm:text-3xl">{rupiah(deposit.total)}</span>
+                </div>
+              </Panel>
+
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <button type="button" className={cn(btn.primary, "h-14")} disabled={!!busy} onClick={() => decide("saldo")}>
+                  <Wallet /> Setuju, masuk saldo
+                </button>
+                <button type="button" className={cn(btn.secondary, "h-14")} disabled={!!busy} onClick={() => decide("tunai")}>
+                  <Banknote /> Setuju, bayar tunai
+                </button>
+                <button type="button" className={cn(btn.danger, "md:col-span-2")} disabled={!!busy} onClick={() => decide("batal")}>
+                  <CircleX /> Warga tidak setuju, batalkan
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* SELESAI */}
+          {step === 4 && (
+            <div className="flex flex-col items-center rounded-2xl border bg-card px-6 py-10 text-center">
+              <span className="grid size-16 place-items-center rounded-full bg-pucuk text-hutan">
+                <CircleCheck className="size-9" aria-hidden />
               </span>
+              <h2 className="mt-4 text-2xl font-extrabold text-tinta">Setoran tersimpan</h2>
+              <p className="mt-2 max-w-md text-base text-muted-foreground">{doneText}</p>
+              <button type="button" className={cn(btn.primary, "mt-6 w-full max-w-sm")} onClick={reset}>
+                Catat setoran berikutnya
+              </button>
             </div>
-          </div>
-
-          <div className="space-y-3 pt-2">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider text-center">
-              Pilih Opsi Pembayaran / Keputusan
-            </p>
-
-            <Button
-              type="button"
-              className="h-14 w-full text-base font-bold gap-2 bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm"
-              disabled={!!busy}
-              onClick={() => decide("saldo")}
-            >
-              <Wallet className="h-5 w-5" /> Setuju — Masukkan ke Saldo Warga
-            </Button>
-
-            <Button
-              type="button"
-              variant="secondary"
-              className="h-14 w-full text-base font-bold gap-2 border shadow-xs"
-              disabled={!!busy}
-              onClick={() => decide("tunai")}
-            >
-              <Banknote className="h-5 w-5 text-emerald-700" /> Setuju — Bayar
-              Tunai Langsung
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              className="h-12 w-full text-sm font-semibold text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
-              disabled={!!busy}
-              onClick={() => decide("batal")}
-            >
-              <XCircle className="h-4 w-4" /> Warga Tidak Setuju (Batalkan
-              Setoran)
-            </Button>
-          </div>
+          )}
         </div>
-      )}
 
-      {/* STEP 4: Selesai */}
-      {step === 4 && (
-        <div className="rounded-2xl border bg-card p-8 text-center space-y-6 shadow-sm">
-          <div className="inline-flex rounded-full bg-emerald-100 p-4 text-emerald-600 shadow-xs">
-            <CheckCircle2 className="h-12 w-12" />
-          </div>
-
-          <div className="space-y-2">
-            <h2 className="text-2xl font-bold tracking-tight">
-              Setoran Berhasil Dicatat!
-            </h2>
-            <p className="text-sm font-medium text-muted-foreground max-w-sm mx-auto">
-              {doneText}
-            </p>
-          </div>
-
-          <Button
-            type="button"
-            className="h-14 w-full text-base font-bold bg-emerald-700 hover:bg-emerald-800 text-white shadow-md"
-            onClick={reset}
-          >
-            Catat Setoran Berikutnya
-          </Button>
-        </div>
-      )}
+        {step < 4 && <aside className="hidden xl:sticky xl:top-10 xl:block">{summary}</aside>}
+      </div>
     </div>
   );
 }

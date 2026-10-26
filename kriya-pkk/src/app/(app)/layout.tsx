@@ -1,58 +1,49 @@
+import { LogOut } from "lucide-react";
 import { requireMe } from "@/lib/auth";
 import { logout } from "@/lib/actions/auth";
+import { AppSidebar } from "@/components/app-sidebar";
 import { BottomNav } from "@/components/bottom-nav";
-import { LogOut, ShieldCheck, Sparkles, User } from "lucide-react";
+import { Logo } from "@/components/brand";
 
-// Semua halaman di dalam folder (app) otomatis wajib login & kelompok aktif
-export default async function AppLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+// Semua halaman di dalam folder (app) otomatis wajib login & kelompok aktif.
+// HP/tablet: header atas + navigasi bawah. Desktop (≥1024px): sidebar kiri.
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const me = await requireMe();
+  const groupName = me.group?.name ?? "Admin platform";
+  const userName = me.fullName || me.email || "Pengguna";
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-xl flex-col bg-background text-foreground selection:bg-emerald-500 selection:text-white">
-      {/* Header Utama / Topbar */}
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b bg-background/95 backdrop-blur-md px-4 py-3.5 shadow-2xs">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-800 text-white shadow-sm">
-            <Sparkles className="h-5 w-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-base font-extrabold tracking-tight">
-                KriyaPKK
-              </span>
-              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 uppercase tracking-wider">
-                Adikara 2026
-              </span>
+    <div className="min-h-dvh lg:grid lg:grid-cols-[17rem_minmax(0,1fr)]">
+      <AppSidebar role={me.role} groupName={groupName} userName={userName} logoutAction={logout} />
+
+      <div className="flex min-h-dvh min-w-0 flex-col">
+        <header className="sticky top-0 z-30 border-b bg-background/90 backdrop-blur-md lg:hidden">
+          <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+            <div className="flex min-w-0 items-center gap-3">
+              <Logo compact />
+              <div className="min-w-0">
+                <p className="truncate text-base font-bold leading-tight text-tinta">{groupName}</p>
+                <p className="truncate text-sm text-muted-foreground">{userName}</p>
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground line-clamp-1">
-              {me.group?.name ?? "Admin Platform"} ·{" "}
-              <strong className="text-foreground">
-                {me.fullName || me.email}
-              </strong>
-            </p>
+            <form action={logout}>
+              <button
+                type="submit"
+                aria-label="Keluar"
+                className="inline-flex h-10 items-center gap-2 rounded-xl border bg-card px-3 text-sm font-semibold text-tinta transition-colors hover:bg-bata-soft hover:text-bata-ink"
+              >
+                <LogOut className="size-4" />
+                <span className="hidden sm:inline">Keluar</span>
+              </button>
+            </form>
           </div>
-        </div>
+        </header>
 
-        <form action={logout}>
-          <button
-            type="submit"
-            aria-label="Keluar"
-            className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-input bg-card hover:bg-muted px-3 text-xs font-bold text-muted-foreground hover:text-foreground shadow-2xs transition-colors"
-          >
-            <LogOut className="h-3.5 w-3.5 text-red-600" />
-            <span className="hidden sm:inline">Keluar</span>
-          </button>
-        </form>
-      </header>
+        <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-32 pt-6 sm:px-6 lg:max-w-6xl lg:px-10 lg:pb-14 lg:pt-10">
+          {children}
+        </main>
+      </div>
 
-      {/* Konten Utama */}
-      <main className="flex-1 px-4 py-5 pb-28">{children}</main>
-
-      {/* Navigasi Bawah / Bottom Navigation */}
       <BottomNav role={me.role} />
     </div>
   );

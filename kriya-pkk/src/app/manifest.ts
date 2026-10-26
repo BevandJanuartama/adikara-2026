@@ -8,8 +8,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Kasir setoran sampah & penasihat produksi kerajinan untuk PKK",
     start_url: "/beranda",
     display: "standalone",
-    background_color: "#ffffff",
-    theme_color: "#166534",
+    background_color: "#F7F8F2",
+    theme_color: "#3E5E35",
     lang: "id",
     icons: [{ src: "/icon.png", sizes: "512x512", type: "image/png" }],
   };

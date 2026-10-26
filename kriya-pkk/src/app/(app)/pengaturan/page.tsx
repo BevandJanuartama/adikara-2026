@@ -1,160 +1,60 @@
+import { CirclePlus, Settings, SlidersVertical, Tags } from "lucide-react";
 import { requireMe } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { ActionForm, Field } from "@/components/action-form";
-import {
-  addPriceType,
-  updateGroupSettings,
-  updatePrice,
-} from "@/lib/actions/ops";
-import {
-  Settings,
-  Coins,
-  Sliders,
-  Tags,
-  PlusCircle,
-  CheckCircle2,
-  Store,
-  Layers,
-} from "lucide-react";
+import { Badge, Notice, PageHeader, Panel } from "@/components/kriya-ui";
+import { addPriceType, updateGroupSettings, updatePrice } from "@/lib/actions/ops";
 
 // FR05 tabel harga, FR06 upah & margin
 export default async function PengaturanPage() {
   const me = await requireMe(["pengurus"]);
   const supabase = await createClient();
-  const { data: prices } = await supabase
-    .from("price_table")
-    .select("id, item_type, price_per_kg, is_active")
-    .order("item_type");
+  const { data: prices } = await supabase.from("price_table").select("id, item_type, price_per_kg, is_active").order("item_type");
 
   return (
-    <div className="mx-auto max-w-xl space-y-6 pb-12">
-      {/* Header & Judul */}
-      <div className="flex items-center justify-between border-b pb-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Pengaturan Sistem
-          </h1>
-          <p className="text-xs text-muted-foreground">
-            Kelola parameter operasional, upah, margin, dan tabel harga sampah
-          </p>
-        </div>
-        <div className="rounded-xl bg-emerald-50 p-2.5 text-emerald-700 shadow-2xs">
-          <Settings className="h-6 w-6" />
-        </div>
-      </div>
+    <div className="space-y-8">
+      <PageHeader title="Harga, upah, dan margin" description="Angka dasar yang dipakai untuk menghitung nilai setoran dan modal produk." icon={Settings} />
 
-      {/* Bagian 1: Upah & Margin Default */}
-      <section className="space-y-3">
-        <div className="flex items-center gap-2 px-1">
-          <Sliders className="h-4 w-4 text-emerald-700" />
-          <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-            Upah & Margin Default
-          </h2>
-        </div>
-
-        <ActionForm
-          action={updateGroupSettings}
-          submitLabel="Simpan Pengaturan Umum"
-          className="space-y-4 rounded-2xl border bg-card p-5 shadow-2xs"
-        >
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Field
-              label="Upah per Jam (Rp)"
-              name="wage_per_hour"
-              type="number"
-              defaultValue={me.group!.wage_per_hour}
-            />
-            <Field
-              label="Margin Default (%)"
-              name="margin_percent"
-              type="number"
-              defaultValue={Math.round(me.group!.default_margin * 100)}
-              min={0}
-              max={300}
-            />
-          </div>
-        </ActionForm>
-      </section>
-
-      {/* Bagian 2: Tabel Harga per Kg */}
-      <section className="space-y-3.5 pt-2">
-        <div className="flex items-center gap-2 px-1">
-          <Tags className="h-4 w-4 text-emerald-700" />
-          <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-            Tabel Harga Sampah per Kg
-          </h2>
-        </div>
-
-        <div className="rounded-xl border bg-muted/30 p-3 text-xs text-muted-foreground flex items-center gap-2">
-          <span className="font-semibold text-foreground">💡 Info:</span>
-          <span>
-            Ikuti harga pengepul setempat. Perubahan berlaku untuk setoran
-            berikutnya.
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 gap-3">
-          {(prices ?? []).map((p) => (
-            <ActionForm
-              key={p.id}
-              action={updatePrice.bind(null, p.id)}
-              submitLabel="Simpan Perubahan Harga"
-              variant="outline"
-              className="space-y-3 rounded-2xl border bg-card p-4 shadow-2xs"
-            >
-              <div className="flex items-center justify-between border-b pb-2.5">
-                <p className="text-sm font-bold capitalize text-foreground">
-                  {p.item_type}
-                </p>
-                <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="is_active"
-                    defaultChecked={p.is_active}
-                    className="size-4 rounded border-gray-300 accent-primary"
-                  />
-                  <span>Aktif</span>
-                </label>
-              </div>
-
-              <Field
-                label="Harga per Kg (Rp)"
-                name="price_per_kg"
-                type="number"
-                defaultValue={Number(p.price_per_kg)}
-              />
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[21rem_minmax(0,1fr)] xl:items-start">
+        <div className="space-y-6 xl:sticky xl:top-10">
+          <Panel title="Upah dan margin" description="Nilai awal untuk setiap ide baru" icon={SlidersVertical}>
+            <ActionForm action={updateGroupSettings} submitLabel="Simpan">
+              <Field label="Upah per jam (Rp)" name="wage_per_hour" type="number" defaultValue={me.group!.wage_per_hour} />
+              <Field label="Margin" name="margin_percent" type="number" defaultValue={Math.round(me.group!.default_margin * 100)} min={0} max={300} suffix="%" />
             </ActionForm>
-          ))}
+          </Panel>
+
+          <Panel title="Tambah jenis barang" icon={CirclePlus} className="border-dashed">
+            <ActionForm action={addPriceType} submitLabel="Tambah jenis" variant="secondary">
+              <Field label="Nama jenis" name="item_type" placeholder="Contoh: Botol kaca bening" />
+              <Field label="Harga per kg (Rp)" name="price_per_kg" type="number" placeholder="3500" />
+            </ActionForm>
+          </Panel>
         </div>
 
-        {/* Formulir Tambah Jenis Barang Baru */}
-        <ActionForm
-          action={addPriceType}
-          submitLabel="Tambah Jenis Barang Baru"
-          className="space-y-3 rounded-2xl border border-dashed border-emerald-300 bg-emerald-50/20 p-5 mt-4"
-        >
-          <div className="flex items-center gap-2 border-b pb-2.5">
-            <PlusCircle className="h-4 w-4 text-emerald-700" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-900">
-              Tambah Jenis Barang / Material
-            </h3>
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Tags className="size-5 text-hutan" aria-hidden />
+            <h2 className="text-lg font-bold text-tinta">Tabel harga per kg ({prices?.length ?? 0} jenis)</h2>
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Field
-              label="Jenis Barang Baru"
-              name="item_type"
-              placeholder="Contoh: Botol Kaca Bening"
-            />
-            <Field
-              label="Harga per Kg (Rp)"
-              name="price_per_kg"
-              type="number"
-              placeholder="Contoh: 3500"
-            />
+          <Notice>Ikuti harga pengepul setempat. Perubahan hanya berlaku untuk setoran berikutnya.</Notice>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-3">
+            {(prices ?? []).map((p) => (
+              <ActionForm key={p.id} action={updatePrice.bind(null, p.id)} submitLabel="Simpan harga" variant="outline" className="space-y-4 rounded-2xl border bg-card p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-lg font-bold text-tinta">{p.item_type}</p>
+                  {!p.is_active && <Badge>Nonaktif</Badge>}
+                </div>
+                <Field label="Harga per kg (Rp)" name="price_per_kg" type="number" defaultValue={Number(p.price_per_kg)} />
+                <label className="flex cursor-pointer items-center gap-2.5 text-base text-tinta">
+                  <input type="checkbox" name="is_active" defaultChecked={p.is_active} className="size-5 accent-hutan" />
+                  Dipakai di setoran
+                </label>
+              </ActionForm>
+            ))}
           </div>
-        </ActionForm>
-      </section>
+        </section>
+      </div>
     </div>
   );
 }
