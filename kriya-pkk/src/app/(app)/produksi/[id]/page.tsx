@@ -4,6 +4,7 @@ import { requireMe } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { kg, rupiah } from "@/lib/format";
 import { ActionForm, Field } from "@/components/action-form";
+import { FotoUpload } from "@/components/foto-upload";
 import { Badge, MoneyRow, PageHeader, Panel } from "@/components/kriya-ui";
 import { cancelBatch, finishBatch, payWages } from "@/lib/actions/ops";
 
@@ -68,6 +69,8 @@ export default async function BatchPage({ params }: { params: Promise<{ id: stri
                   <Field label="Jumlah jadi" name="done" type="number" min={0} max={b.qty_planned} defaultValue={b.qty_planned} />
                   <Field label="Jumlah gagal" name="failed" type="number" min={0} max={b.qty_planned} defaultValue={0} />
                 </div>
+                <FotoUpload groupId={me.group!.id} label="Foto hasil karya" />
+                <p className="text-sm text-muted-foreground">Foto ini dipakai sebagai foto produk di katalog online.</p>
               </ActionForm>
             </Panel>
           )}

@@ -147,7 +147,13 @@ export default async function Home() {
       {/* Navigasi */}
       <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
         <Logo />
-        <nav className="flex items-center gap-2 sm:gap-3">
+        <nav className="flex items-center gap-1 sm:gap-3">
+          <Link
+            href="/katalog"
+            className="rounded-full px-3 py-2 text-base font-semibold hover:bg-(--daun-muda) focus-visible:outline-2 focus-visible:outline-(--tinta) sm:px-4"
+          >
+            Belanja
+          </Link>
           <Link
             href="/login"
             className="rounded-full px-4 py-2 text-base font-semibold hover:bg-(--daun-muda) focus-visible:outline-2 focus-visible:outline-(--tinta)"
@@ -183,7 +189,10 @@ export default async function Home() {
             </Link>
           </div>
           <p className="mt-5 text-base text-(--tinta)/65">
-            Sekali aktivasi, tanpa biaya bulanan.
+            Sekali aktivasi, tanpa biaya bulanan.{" "}
+            <Link href="/katalog" className="font-semibold text-(--hutan) underline underline-offset-4">
+              Atau belanja produk PKK di katalog
+            </Link>
           </p>
         </div>
 
@@ -438,7 +447,10 @@ export default async function Home() {
             bisa dibuka anggotanya.
           </p>
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-            <Link href="/daftar" className={btnLight}>
+            <Link
+              href="/daftar"
+              className={btnLight}
+            >
               Daftarkan kelompok PKK
             </Link>
             <Link
@@ -449,7 +461,9 @@ export default async function Home() {
             </Link>
           </div>
           <p className="mt-16 max-w-2xl text-sm leading-relaxed text-white/75">
-            © 2026 Team Claude Limit. All Rights Reserved.
+            KriyaPKK adalah karya Divisi Inovasi Software ADIKARA 2026, Fakultas
+            Informatika Telkom University. Mendukung SDG 8, 11, 9, 4, dan 3
+            serta Asta Cita 6, 2, dan 4.
           </p>
         </div>
       </section>

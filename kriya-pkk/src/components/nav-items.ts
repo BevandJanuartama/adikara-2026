@@ -1,5 +1,6 @@
 import {
   BookOpenCheck,
+  ClipboardList,
   Boxes,
   Building2,
   Coins,
@@ -43,7 +44,13 @@ export const SIDEBAR: Record<Role, NavGroup[]> = {
       items: [
         { href: "/ide", label: "Dapur kreasi", icon: Lightbulb },
         { href: "/produksi", label: "Produksi", icon: Factory },
-        { href: "/produk", label: "Produk & penjualan", icon: ShoppingBag },
+      ],
+    },
+    {
+      title: "Penjualan",
+      items: [
+        { href: "/produk", label: "Produk & katalog", icon: ShoppingBag },
+        { href: "/pesanan", label: "Pesanan online", icon: ClipboardList },
       ],
     },
     {
@@ -57,7 +64,7 @@ export const SIDEBAR: Record<Role, NavGroup[]> = {
       title: "Kelompok",
       items: [
         { href: "/anggota", label: "Anggota", icon: UserCheck },
-        { href: "/pengaturan", label: "Harga, upah & margin", icon: Settings },
+        { href: "/pengaturan", label: "Pengaturan posko", icon: Settings },
       ],
     },
   ],

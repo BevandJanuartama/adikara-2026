@@ -8,6 +8,8 @@ import { requireMe } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { friendlyError } from "@/lib/errors";
 import { parseDecimal } from "@/lib/format";
+import { isKategori } from "@/lib/marketplace/kategori";
+import { normalisasiWa } from "@/lib/marketplace/wa";
 
 type FormState = { error?: string; message?: string } | undefined;
 
@@ -98,6 +100,7 @@ export async function startBatch(ideaId: string, _p: FormState, fd: FormData): P
 export async function finishBatch(batchId: string, _p: FormState, fd: FormData): Promise<FormState> {
   const { error } = await rpc("finish_batch", {
     p_batch_id: batchId, p_done: Math.floor(num(fd, "done")), p_failed: Math.floor(num(fd, "failed")),
+    p_photo: str(fd, "photo_path") || null,
   });
   if (error) return { error };
   revalidatePath(`/produksi/${batchId}`);
@@ -151,4 +154,71 @@ export async function reverseCash(entryId: string, _p: FormState, _fd: FormData)
   if (error) return { error };
   revalidatePath("/kas");
   return { message: "Entri pembalik dibuat." };
+}
+
+
+// ---------- Toko online: profil posko ----------
+export async function updateShopProfile(_p: FormState, fd: FormData): Promise<FormState> {
+  const me = await requireMe(["pengurus"]);
+  const name = str(fd, "name");
+  const whatsapp = normalisasiWa(str(fd, "whatsapp"));
+  const postal = str(fd, "postal_code");
+  const lat = str(fd, "latitude");
+  const lng = str(fd, "longitude");
+  if (name.length < 3) return { error: "Nama posko minimal 3 huruf" };
+  if (!whatsapp) return { error: "Nomor WhatsApp belum benar (contoh 0812xxxxxxx)" };
+  if (postal && !/^\d{5}$/.test(postal)) return { error: "Kode pos harus 5 angka" };
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("groups")
+    .update({
+      name,
+      address: str(fd, "address") || null,
+      city: str(fd, "city") || null,
+      postal_code: postal || null,
+      whatsapp,
+      latitude: lat ? Number(lat) : null,
+      longitude: lng ? Number(lng) : null,
+      shop_open: fd.get("shop_open") === "on",
+    })
+    .eq("id", me.group!.id);
+  if (error) return { error: friendlyError(error.message) };
+  revalidatePath("/pengaturan");
+  return { message: "Profil posko disimpan." };
+}
+
+// ---------- Toko online: produk ----------
+export async function saveProduct(id: string | null, _p: FormState, fd: FormData): Promise<FormState> {
+  const category = str(fd, "category");
+  if (!isKategori(category)) return { error: "Pilih kategori" };
+  const payload = {
+    name: str(fd, "name"),
+    category,
+    description: str(fd, "description"),
+    waste_materials: str(fd, "waste_materials").split(",").map((s) => s.trim()).filter(Boolean),
+    weight_grams: Math.max(1, Math.round(num(fd, "weight_grams"))),
+    sell_price: Math.round(num(fd, "sell_price")),
+    unit_cost: Math.round(num(fd, "unit_cost")),
+    qty: Math.max(0, Math.floor(num(fd, "qty"))),
+    photo_path: str(fd, "photo_path"),
+    is_listed: fd.get("is_listed") === "on",
+  };
+  if (payload.name.length < 2) return { error: "Nama produk wajib diisi" };
+  if (payload.sell_price <= 0) return { error: "Harga jual harus lebih dari 0" };
+  const { error } = await rpc("save_product", { p_id: id, p: payload });
+  if (error) return { error };
+  revalidatePath("/produk");
+  return { message: id ? "Produk diperbarui." : "Produk ditambahkan." };
+}
+
+// ---------- Toko online: status pesanan ----------
+export async function setOrderStatus(orderId: string, status: string, _p: FormState, fd: FormData): Promise<FormState> {
+  const { error } = await rpc("set_order_status", {
+    p_order_id: orderId,
+    p_status: status,
+    p_tracking: str(fd, "tracking_number") || null,
+  });
+  if (error) return { error };
+  revalidatePath("/pesanan");
+  return { message: "Status pesanan diperbarui." };
 }

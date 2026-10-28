@@ -1,19 +1,50 @@
-import { CirclePlus, Settings, SlidersVertical, Tags } from "lucide-react";
+import Link from "next/link";
+import { CirclePlus, ExternalLink, Settings, SlidersVertical, Store, Tags } from "lucide-react";
 import { requireMe } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { ActionForm, Field } from "@/components/action-form";
-import { Badge, Notice, PageHeader, Panel } from "@/components/kriya-ui";
+import { Badge, Notice, PageHeader, Panel, btn } from "@/components/kriya-ui";
+import { ProfilPoskoForm } from "./profil-posko-form";
 import { addPriceType, updateGroupSettings, updatePrice } from "@/lib/actions/ops";
 
 // FR05 tabel harga, FR06 upah & margin
 export default async function PengaturanPage() {
   const me = await requireMe(["pengurus"]);
   const supabase = await createClient();
-  const { data: prices } = await supabase.from("price_table").select("id, item_type, price_per_kg, is_active").order("item_type");
+  const [{ data: prices }, { data: g }] = await Promise.all([
+    supabase.from("price_table").select("id, item_type, price_per_kg, is_active").order("item_type"),
+    supabase
+      .from("groups")
+      .select("name, slug, address, city, postal_code, whatsapp, latitude, longitude, shop_open")
+      .eq("id", me.group!.id)
+      .single(),
+  ]);
 
   return (
     <div className="space-y-8">
-      <PageHeader title="Harga, upah, dan margin" description="Angka dasar yang dipakai untuk menghitung nilai setoran dan modal produk." icon={Settings} />
+      <PageHeader title="Pengaturan posko" description="Profil toko online, tabel harga setoran, upah, dan margin." icon={Settings} />
+
+      {g && (
+        <Panel
+          title="Profil posko & toko online"
+          description="Tampil di katalog dan dipakai untuk ongkir serta notifikasi WhatsApp pesanan."
+          icon={Store}
+          actions={
+            g.slug ? (
+              <Link href={`/katalog?posko=${g.slug}`} className={`${btn.outline} ${btn.small}`}>
+                Lihat di katalog <ExternalLink />
+              </Link>
+            ) : null
+          }
+        >
+          {(!g.whatsapp || g.latitude == null) && (
+            <Notice tone="warning" className="mb-4">
+              Lengkapi nomor WhatsApp dan titik lokasi supaya notifikasi pesanan masuk dan pembeli bisa memilih kurir.
+            </Notice>
+          )}
+          <ProfilPoskoForm g={g} />
+        </Panel>
+      )}
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[21rem_minmax(0,1fr)] xl:items-start">
         <div className="space-y-6 xl:sticky xl:top-10">

@@ -3,10 +3,11 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
-import { Building2, Eye, EyeOff, LoaderCircle, Lock, LogIn, Mail, MapPin, User, UserPlus } from "lucide-react";
+import { Building, Building2, Eye, EyeOff, Hash, LoaderCircle, Lock, LogIn, Mail, MapPin, Phone, User, UserPlus } from "lucide-react";
 import { login, register, type FormState } from "@/lib/actions/auth";
 import { cn } from "@/lib/utils";
 import { Notice, btn, inputClass, labelClass } from "@/components/kriya-ui";
+import { LokasiInput } from "@/components/toko/lokasi-input";
 
 function Field({
   name,
@@ -109,12 +110,25 @@ export function RegisterForm() {
       <fieldset className="space-y-4">
         <legend className="mb-3 text-base font-bold text-tinta">Data kelompok</legend>
         <Field name="group_name" label="Nama kelompok PKK" icon={Building2} placeholder="Contoh: PKK RW 05 Mawar" />
+        <Field name="group_address" label="Alamat posko" icon={MapPin} autoComplete="street-address" placeholder="Jalan, RT/RW, kelurahan, kecamatan" />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_9rem]">
+          <Field name="city" label="Kota / kabupaten" icon={Building} autoComplete="address-level2" placeholder="Kab. Bandung" />
+          <Field name="postal_code" label="Kode pos" icon={Hash} required={false} placeholder="40257" />
+        </div>
         <Field
-          name="group_address"
-          label="Alamat posko"
-          icon={MapPin}
-          required={false}
-          placeholder="Contoh: Jl. Merdeka No. 12"
+          name="whatsapp"
+          label="WhatsApp posko"
+          icon={Phone}
+          type="tel"
+          autoComplete="tel"
+          placeholder="0812xxxxxxxx"
+          hint="Notifikasi pesanan online dikirim ke nomor ini."
+        />
+        <LokasiInput
+          label="Titik lokasi posko"
+          namaLat="latitude"
+          namaLng="longitude"
+          bantuan="Untuk peta di katalog dan ongkir kurir (maks. 150 km). Bisa diisi nanti di Pengaturan."
         />
       </fieldset>
 

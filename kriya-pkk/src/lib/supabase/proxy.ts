@@ -3,6 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 
 // Halaman yang boleh dibuka tanpa login
 const PUBLIC_PATHS = ["/", "/login", "/daftar"];
+// Toko online: pembeli tidak perlu akun
+const PUBLIC_PREFIXES = ["/katalog", "/keranjang", "/checkout", "/lacak"];
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -33,7 +35,10 @@ export async function updateSession(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
   // Route /api/* memeriksa login sendiri (balas 401, bukan redirect)
-  const isPublic = PUBLIC_PATHS.includes(path) || path.startsWith("/api/");
+  const isPublic =
+    PUBLIC_PATHS.includes(path) ||
+    PUBLIC_PREFIXES.some((p) => path === p || path.startsWith(p + "/")) ||
+    path.startsWith("/api/");
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
