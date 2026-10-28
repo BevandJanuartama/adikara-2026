@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { buatTransaksiSnap } from "@/lib/marketplace/midtrans";
+import { GalatMidtrans, buatTransaksiSnap } from "@/lib/marketplace/midtrans";
 import { appUrl } from "@/lib/marketplace/pesanan";
 
 const schema = z.object({ code: z.string().min(5), t: z.string().min(10) });
@@ -42,6 +42,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ token: snap.token });
   } catch (e) {
     console.error("[bayar]", e);
-    return NextResponse.json({ error: "Pembayaran belum bisa dibuat. Coba lagi." }, { status: 502 });
+    const detail =
+      process.env.NODE_ENV !== "production" && e instanceof Error
+        ? ` (${e.message})`
+        : ` (kode ${e instanceof GalatMidtrans ? e.kode : "MT"})`;
+    return NextResponse.json({ error: `Pembayaran belum bisa dibuat. Coba lagi.${detail}` }, { status: 502 });
   }
 }

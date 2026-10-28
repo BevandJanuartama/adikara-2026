@@ -4,7 +4,8 @@ import { GalatBiteship, cekTarif, pesanGalatBiteship } from "@/lib/marketplace/b
 import { CORE_BASE, authHeaderMidtrans } from "@/lib/marketplace/midtrans";
 import { MIDTRANS_PRODUKSI } from "@/lib/marketplace/midtrans-mode";
 
-// GET /api/diagnosa — cek cepat koneksi toko online. HANYA aktif saat `npm run dev`.
+// GET /api/diagnosa — cek cepat koneksi toko online. Aktif saat `npm run dev`,
+// atau di produksi bila ?kunci= sama dengan CRON_SECRET.
 // Tidak menampilkan isi kunci, hanya hasil pengecekan.
 type Hasil = { ok: boolean; pesan: string };
 
@@ -71,8 +72,12 @@ async function cekDatabase(): Promise<Hasil> {
   }
 }
 
-export async function GET() {
-  if (process.env.NODE_ENV === "production") return NextResponse.json({ error: "not found" }, { status: 404 });
+// Di Vercel: buka /api/diagnosa?kunci=<isi CRON_SECRET>. Tanpa kunci yang benar → 404.
+export async function GET(req: Request) {
+  const kunci = new URL(req.url).searchParams.get("kunci") ?? "";
+  const rahasia = process.env.CRON_SECRET?.trim() ?? "";
+  const boleh = process.env.NODE_ENV !== "production" || (rahasia.length >= 16 && kunci === rahasia);
+  if (!boleh) return NextResponse.json({ error: "not found" }, { status: 404 });
   const [database, biteship, midtrans] = await Promise.all([cekDatabase(), cekBiteship(), cekMidtrans()]);
   return NextResponse.json(
     {

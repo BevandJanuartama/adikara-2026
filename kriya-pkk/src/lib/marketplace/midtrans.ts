@@ -4,9 +4,16 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { MIDTRANS_PRODUKSI } from "@/lib/marketplace/midtrans-mode";
 
 // Sandbox/produksi diatur NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION (lihat midtrans-mode.ts)
+// Kode singkat untuk pesan error di produksi: MT401 (kunci ditolak), MT400 (data ditolak), KONFIG (env kosong), dst.
+export class GalatMidtrans extends Error {
+  constructor(message: string, public kode: string) {
+    super(message);
+  }
+}
+
 const serverKey = () => {
   const k = process.env.MIDTRANS_SERVER_KEY?.trim();
-  if (!k) throw new Error("MIDTRANS_SERVER_KEY belum diisi di .env.local");
+  if (!k) throw new GalatMidtrans("MIDTRANS_SERVER_KEY belum diisi (di Vercel: Settings → Environment Variables, lalu Redeploy)", "KONFIG");
   return k;
 };
 export const SNAP_BASE = { sandbox: "https://app.sandbox.midtrans.com/snap/v1", produksi: "https://app.midtrans.com/snap/v1" };
@@ -31,7 +38,7 @@ export async function buatTransaksiSnap(p: {
 }): Promise<{ token: string; redirect_url: string }> {
   const items = p.items.map((i) => ({ ...i, name: i.name.slice(0, 50), price: Math.round(i.price) }));
   const jumlah = items.reduce((s, i) => s + i.price * i.quantity, 0);
-  if (jumlah !== Math.round(p.total)) throw new Error("Rincian Midtrans tidak sama dengan total pesanan");
+  if (jumlah !== Math.round(p.total)) throw new GalatMidtrans("Rincian Midtrans tidak sama dengan total pesanan", "TOTAL");
 
   const res = await fetch(`${snapBase()}/transactions`, {
     method: "POST",
@@ -58,7 +65,7 @@ export async function buatTransaksiSnap(p: {
       res.status === 401
         ? ` (kunci ditolak di mode ${MIDTRANS_PRODUKSI ? "PRODUKSI" : "SANDBOX"}; cek MIDTRANS_SERVER_KEY dan NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION)`
         : "";
-    throw new Error(`Midtrans ${res.status}: ${pesan}${petunjuk}`);
+    throw new GalatMidtrans(`Midtrans ${res.status}: ${pesan}${petunjuk}`, `MT${res.status}`);
   }
   return { token: json.token, redirect_url: json.redirect_url ?? "" };
 }

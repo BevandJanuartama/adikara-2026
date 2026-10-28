@@ -3,7 +3,7 @@ import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { friendlyError } from "@/lib/errors";
 import { normalisasiWa } from "@/lib/marketplace/wa";
-import { buatTransaksiSnap } from "@/lib/marketplace/midtrans";
+import { GalatMidtrans, buatTransaksiSnap } from "@/lib/marketplace/midtrans";
 import { kirimWa } from "@/lib/marketplace/fonnte";
 import { KesalahanToko, hitungOngkir, muatKeranjang } from "@/lib/marketplace/ongkir";
 import { appUrl, pesanWaBaru } from "@/lib/marketplace/pesanan";
@@ -110,8 +110,11 @@ export async function POST(req: Request) {
     } catch (e) {
       console.error("[checkout] midtrans", e);
       await db.rpc("close_order", { p_code: o.code, p_status: "gagal", p_midtrans_status: "snap_error" });
-      // Saat development, tampilkan alasan dari Midtrans supaya mudah dicari penyebabnya
-      const detail = process.env.NODE_ENV !== "production" && e instanceof Error ? ` (${e.message})` : "";
+      // Development: alasan lengkap. Produksi: kode singkat (alasan lengkap ada di Vercel → Logs)
+      const detail =
+        process.env.NODE_ENV !== "production" && e instanceof Error
+          ? ` (${e.message})`
+          : ` (kode ${e instanceof GalatMidtrans ? e.kode : "MT"})`;
       return NextResponse.json({ error: `Pembayaran belum bisa dibuat. Coba lagi sebentar.${detail}` }, { status: 502 });
     }
     await db.rpc("attach_payment", { p_code: o.code, p_token: snap.token, p_redirect_url: snap.redirect_url });
