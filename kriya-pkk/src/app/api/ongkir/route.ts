@@ -32,6 +32,7 @@ export async function POST(req: Request) {
   } catch (e) {
     if (e instanceof KesalahanToko) return NextResponse.json({ error: e.message }, { status: e.status });
     console.error("[ongkir]", e);
-    return NextResponse.json({ error: "Gagal cek ongkir. Coba lagi sebentar." }, { status: 502 });
+    const detail = process.env.NODE_ENV !== "production" && e instanceof Error ? ` (${e.message})` : "";
+    return NextResponse.json({ error: `Gagal cek ongkir. Coba lagi sebentar.${detail}` }, { status: 502 });
   }
 }

@@ -1,16 +1,20 @@
 import "server-only";
 import { createHash, timingSafeEqual } from "node:crypto";
 
-// Kunci sandbox Midtrans berawalan "SB-Mid-…", jadi mode sandbox/produksi terbaca otomatis.
+import { MIDTRANS_PRODUKSI } from "@/lib/marketplace/midtrans-mode";
+
+// Sandbox/produksi diatur NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION (lihat midtrans-mode.ts)
 const serverKey = () => {
-  const k = process.env.MIDTRANS_SERVER_KEY;
+  const k = process.env.MIDTRANS_SERVER_KEY?.trim();
   if (!k) throw new Error("MIDTRANS_SERVER_KEY belum diisi di .env.local");
   return k;
 };
-const isProduction = () => !serverKey().startsWith("SB-");
-const snapBase = () => (isProduction() ? "https://app.midtrans.com/snap/v1" : "https://app.sandbox.midtrans.com/snap/v1");
-const coreBase = () => (isProduction() ? "https://api.midtrans.com" : "https://api.sandbox.midtrans.com");
-const authHeader = () => "Basic " + Buffer.from(serverKey() + ":").toString("base64");
+export const SNAP_BASE = { sandbox: "https://app.sandbox.midtrans.com/snap/v1", produksi: "https://app.midtrans.com/snap/v1" };
+export const CORE_BASE = { sandbox: "https://api.sandbox.midtrans.com", produksi: "https://api.midtrans.com" };
+const snapBase = () => (MIDTRANS_PRODUKSI ? SNAP_BASE.produksi : SNAP_BASE.sandbox);
+const coreBase = () => (MIDTRANS_PRODUKSI ? CORE_BASE.produksi : CORE_BASE.sandbox);
+export const authHeaderMidtrans = () => "Basic " + Buffer.from(serverKey() + ":").toString("base64");
+const authHeader = authHeaderMidtrans;
 
 export type ItemMidtrans = { id: string; name: string; price: number; quantity: number };
 
@@ -41,7 +45,7 @@ export async function buatTransaksiSnap(p: {
         ...(p.pembeli.email ? { email: p.pembeli.email } : {}),
       },
       enabled_payments: METODE_BAYAR,
-      expiry: { unit: "minutes", duration: p.menitKedaluwarsa ?? 60 },
+      expiry: { unit: "minute", duration: p.menitKedaluwarsa ?? 60 },
       callbacks: { finish: p.finishUrl },
     }),
     cache: "no-store",
@@ -49,7 +53,12 @@ export async function buatTransaksiSnap(p: {
   });
   const json = (await res.json().catch(() => null)) as { token?: string; redirect_url?: string; error_messages?: string[] } | null;
   if (!res.ok || !json?.token) {
-    throw new Error(`Midtrans: ${json?.error_messages?.join(", ") ?? res.statusText}`);
+    const pesan = json?.error_messages?.join(", ") ?? res.statusText;
+    const petunjuk =
+      res.status === 401
+        ? ` (kunci ditolak di mode ${MIDTRANS_PRODUKSI ? "PRODUKSI" : "SANDBOX"}; cek MIDTRANS_SERVER_KEY dan NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION)`
+        : "";
+    throw new Error(`Midtrans ${res.status}: ${pesan}${petunjuk}`);
   }
   return { token: json.token, redirect_url: json.redirect_url ?? "" };
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import { SNAP_JS_URL } from "@/lib/marketplace/midtrans-mode";
+
 // Memuat snap.js Midtrans sekali saja, lalu membuka popup pembayaran.
 type SnapCallbacks = {
   onSuccess?: (r: unknown) => void;
@@ -19,9 +21,7 @@ export function muatSnap(clientKey: string): Promise<void> {
   if (typeof window === "undefined") return Promise.reject(new Error("browser saja"));
   if (window.snap) return Promise.resolve();
   if (muat) return muat;
-  const src = clientKey.startsWith("SB-")
-    ? "https://app.sandbox.midtrans.com/snap/snap.js"
-    : "https://app.midtrans.com/snap/snap.js";
+  const src = SNAP_JS_URL;
   muat = new Promise<void>((resolve, reject) => {
     const s = document.createElement("script");
     s.src = src;

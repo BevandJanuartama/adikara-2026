@@ -1,6 +1,6 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { cekTarif, type Tarif } from "@/lib/marketplace/biteship";
+import { GalatBiteship, cekTarif, pesanGalatBiteship, type Tarif } from "@/lib/marketplace/biteship";
 import { MAKS_JARAK_KM, jarakKm, titikValid, type Titik } from "@/lib/marketplace/geo";
 import type { PoskoToko } from "@/lib/marketplace/types";
 
@@ -49,10 +49,19 @@ export async function hitungOngkir(
       422,
     );
   }
-  const tarif = await cekTarif(
-    { ...asal, postal: posko.postal_code },
-    tujuan,
-    baris.map((b) => ({ name: b.name, value: b.sell_price, weight: b.weight_grams, quantity: b.qtyPesan })),
-  );
-  return { jarakKm: jarak, tarif };
+  const barang = baris.map((b) => ({ name: b.name, value: Number(b.sell_price), weight: b.weight_grams, quantity: b.qtyPesan }));
+  try {
+    let tarif: Tarif[];
+    try {
+      tarif = await cekTarif({ ...asal, postal: posko.postal_code }, tujuan, barang);
+    } catch (e) {
+      // kode pos tidak dikenali → ulangi pakai titik koordinat saja
+      if (e instanceof GalatBiteship && e.code === 40001001) tarif = await cekTarif(asal, tujuan, barang, false);
+      else throw e;
+    }
+    return { jarakKm: jarak, tarif };
+  } catch (e) {
+    if (e instanceof GalatBiteship) throw new KesalahanToko(pesanGalatBiteship(e), e.status >= 500 ? 502 : 422);
+    throw e;
+  }
 }

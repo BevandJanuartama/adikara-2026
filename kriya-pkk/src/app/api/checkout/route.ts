@@ -110,7 +110,9 @@ export async function POST(req: Request) {
     } catch (e) {
       console.error("[checkout] midtrans", e);
       await db.rpc("close_order", { p_code: o.code, p_status: "gagal", p_midtrans_status: "snap_error" });
-      return NextResponse.json({ error: "Pembayaran belum bisa dibuat. Coba lagi sebentar." }, { status: 502 });
+      // Saat development, tampilkan alasan dari Midtrans supaya mudah dicari penyebabnya
+      const detail = process.env.NODE_ENV !== "production" && e instanceof Error ? ` (${e.message})` : "";
+      return NextResponse.json({ error: `Pembayaran belum bisa dibuat. Coba lagi sebentar.${detail}` }, { status: 502 });
     }
     await db.rpc("attach_payment", { p_code: o.code, p_token: snap.token, p_redirect_url: snap.redirect_url });
 
@@ -135,6 +137,7 @@ export async function POST(req: Request) {
   } catch (e) {
     if (e instanceof KesalahanToko) return NextResponse.json({ error: e.message }, { status: e.status });
     console.error("[checkout]", e);
-    return NextResponse.json({ error: "Pesanan gagal dibuat. Coba lagi." }, { status: 500 });
+    const detail = process.env.NODE_ENV !== "production" && e instanceof Error ? ` (${e.message})` : "";
+    return NextResponse.json({ error: `Pesanan gagal dibuat. Coba lagi.${detail}` }, { status: 500 });
   }
 }
