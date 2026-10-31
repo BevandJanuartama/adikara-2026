@@ -101,6 +101,7 @@ export function KeranjangView() {
                   <Link href={`/checkout?posko=${encodeURIComponent(slug)}`} className={cn(btn.primary, "w-full")}>
                     Checkout dari posko ini <ArrowRight />
                   </Link>
+                  <p className="text-center text-sm text-muted-foreground">Ongkir dihitung saat checkout. Perlu masuk dengan akun pembeli.</p>
                 </footer>
               </section>
             );

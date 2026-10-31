@@ -2,9 +2,9 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Halaman yang boleh dibuka tanpa login
-const PUBLIC_PATHS = ["/", "/login", "/daftar"];
-// Toko online: pembeli tidak perlu akun
-const PUBLIC_PREFIXES = ["/katalog", "/keranjang", "/checkout", "/lacak"];
+const PUBLIC_PATHS = ["/", "/login", "/daftar", "/daftar/pembeli", "/privasi"];
+// Toko online: katalog & keranjang bebas dibuka. Checkout dan /akun (pesanan saya) wajib login.
+const PUBLIC_PREFIXES = ["/katalog", "/keranjang", "/lacak"];
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -44,6 +44,8 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.search = "";
+    // setelah masuk, kembali ke halaman yang tadi dibuka (mis. /checkout?posko=…)
+    url.searchParams.set("next", path + request.nextUrl.search);
     return NextResponse.redirect(url);
   }
 

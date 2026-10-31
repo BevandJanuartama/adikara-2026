@@ -1,4 +1,4 @@
-export type Role = "admin" | "pengurus" | "anggota";
+export type Role = "admin" | "pengurus" | "anggota" | "pembeli";
 export type GroupStatus = "pending" | "active" | "inactive";
 export type Condition = "bersih" | "kotor" | "rusak";
 
@@ -7,6 +7,7 @@ export type Me = {
   email: string | null;
   fullName: string;
   role: Role;
+  phone?: string | null;
   isActive: boolean;
   group: {
     id: string;

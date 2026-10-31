@@ -1,6 +1,6 @@
 "use client";
 
-import { SNAP_JS_URL } from "@/lib/marketplace/midtrans-mode";
+import { snapJsUrl, type KonfigSnap } from "@/lib/marketplace/midtrans-mode";
 
 // Memuat snap.js Midtrans sekali saja, lalu membuka popup pembayaran.
 type SnapCallbacks = {
@@ -17,11 +17,11 @@ declare global {
 
 let muat: Promise<void> | null = null;
 
-export function muatSnap(clientKey: string): Promise<void> {
+export function muatSnap({ clientKey, produksi }: KonfigSnap): Promise<void> {
   if (typeof window === "undefined") return Promise.reject(new Error("browser saja"));
   if (window.snap) return Promise.resolve();
   if (muat) return muat;
-  const src = SNAP_JS_URL;
+  const src = snapJsUrl(produksi);
   muat = new Promise<void>((resolve, reject) => {
     const s = document.createElement("script");
     s.src = src;
@@ -37,8 +37,9 @@ export function muatSnap(clientKey: string): Promise<void> {
   return muat;
 }
 
-export async function bayar(token: string, clientKey: string, cb: SnapCallbacks) {
-  await muatSnap(clientKey);
+export async function bayar(token: string, konfig: KonfigSnap, cb: SnapCallbacks) {
+  if (!konfig.clientKey) throw new Error("NEXT_PUBLIC_MIDTRANS_CLIENT_KEY kosong");
+  await muatSnap(konfig);
   if (!window.snap) throw new Error("Snap belum siap");
   window.snap.pay(token, cb);
 }

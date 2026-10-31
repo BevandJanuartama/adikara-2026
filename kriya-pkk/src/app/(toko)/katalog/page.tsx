@@ -1,9 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { PackageSearch, Search, X } from "lucide-react";
+import { PackageSearch, Search, Store, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
-import { btn, EmptyState, inputClass } from "@/components/kriya-ui";
+import { btn, EmptyState, Notice, inputClass } from "@/components/kriya-ui";
 import { KATEGORI, isKategori } from "@/lib/marketplace/kategori";
 import { KartuProduk, type ProdukKatalog } from "@/components/toko/kartu-produk";
 
@@ -35,8 +35,18 @@ export default async function KatalogPage({ searchParams }: { searchParams: Prom
     p_posko: posko ?? null,
     p_limit: 120,
   });
+  // Data asli dari database: fungsi katalog_list (tabel finished_goods + groups) di Supabase.
+  // Yang tampil hanya produk "Tampilkan di katalog", dari posko aktif yang tokonya buka.
   const produk = (data ?? []) as (ProdukKatalog & { posko_slug: string })[];
   const namaPosko = posko ? produk[0]?.posko_name ?? posko : null;
+  const adaFilter = !!(q || kategori || posko);
+
+  // Daftar posko yang punya produk di hasil ini (untuk filter cepat)
+  const daftarPosko = [...produk.reduce((m, p) => {
+    const x = m.get(p.posko_slug) ?? { slug: p.posko_slug, nama: p.posko_name ?? p.posko_slug, jumlah: 0 };
+    x.jumlah += 1;
+    return m.set(p.posko_slug, x);
+  }, new Map<string, { slug: string; nama: string; jumlah: number }>()).values()].sort((a, b) => b.jumlah - a.jumlah);
 
   return (
     <div className="space-y-6">
@@ -46,7 +56,7 @@ export default async function KatalogPage({ searchParams }: { searchParams: Prom
           Produk olahan limbah, dibuat ibu-ibu PKK
         </h1>
         <p className="mt-2 max-w-xl text-base text-tinta/80">
-          Dari kain perca, minyak jelantah, sampai sisa dapur. Ambil di posko atau kirim lewat kurir lokal.
+          Dari kain perca, minyak jelantah, sampai sisa dapur. Ambil di posko atau kirim lewat ekspedisi (JNE, J&T, SiCepat, Pos).
         </p>
         <form action="/katalog" className="mt-5 flex max-w-xl gap-2">
           {kategori && <input type="hidden" name="kategori" value={kategori} />}
@@ -103,7 +113,7 @@ export default async function KatalogPage({ searchParams }: { searchParams: Prom
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-base text-muted-foreground">
-          {error ? "Katalog belum bisa dimuat." : `${produk.length} produk`}
+          {error ? "Katalog belum bisa dimuat." : `${produk.length} produk dari ${daftarPosko.length} posko`}
           {q && (
             <>
               {" "}untuk <span className="font-semibold text-tinta">“{q}”</span>
@@ -124,13 +134,44 @@ export default async function KatalogPage({ searchParams }: { searchParams: Prom
         </div>
       </div>
 
-      {produk.length === 0 ? (
-        <EmptyState
-          icon={PackageSearch}
-          title="Produk tidak ditemukan"
-          text="Coba kata lain atau pilih kategori Semua."
-          action={<Link href="/katalog" className={btn.outline}>Lihat semua produk</Link>}
-        />
+      {!posko && daftarPosko.length > 1 && (
+        <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+          <div className="flex w-max items-center gap-2 pb-1 sm:w-auto sm:flex-wrap">
+            <span className="text-sm font-semibold text-muted-foreground">Posko:</span>
+            {daftarPosko.map((d) => (
+              <Link
+                key={d.slug}
+                href={href(sp, { posko: d.slug })}
+                className="inline-flex h-10 items-center gap-1.5 rounded-full bg-daun-muda px-3 text-sm font-semibold text-hutan hover:bg-pucuk"
+              >
+                <Store className="size-4" aria-hidden /> {d.nama}
+                <span className="rounded-full bg-card px-1.5 tabular-nums">{d.jumlah}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {error ? (
+        <Notice tone="error">
+          Katalog belum bisa dimuat dari database: {error.message}. Pastikan file 0002_marketplace.sql sudah dijalankan di Supabase.
+        </Notice>
+      ) : produk.length === 0 ? (
+        adaFilter ? (
+          <EmptyState
+            icon={PackageSearch}
+            title="Produk tidak ditemukan"
+            text="Coba kata lain atau pilih kategori Semua."
+            action={<Link href="/katalog" className={btn.outline}>Lihat semua produk</Link>}
+          />
+        ) : (
+          <EmptyState
+            icon={Store}
+            title="Belum ada produk di katalog"
+            text="Pengurus posko menambah produk di menu Produk & katalog, lalu mencentang Tampilkan di katalog online."
+            action={<Link href="/login" className={btn.outline}>Masuk sebagai pengurus</Link>}
+          />
+        )
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
           {produk.map((p) => (

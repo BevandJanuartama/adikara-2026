@@ -14,6 +14,9 @@ export type ProdukForm = {
   description: string | null;
   waste_materials: string[];
   weight_grams: number;
+  length_cm?: number | null;
+  width_cm?: number | null;
+  height_cm?: number | null;
   sell_price: number;
   unit_cost: number;
   qty: number;
@@ -43,6 +46,34 @@ export function ProductForm({ groupId, p }: { groupId: string; p?: ProdukForm })
         <Field label="Stok" name="qty" type="number" min={0} defaultValue={p?.qty ?? 0} suffix="unit" />
         <Field label="Berat" name="weight_grams" type="number" min={1} defaultValue={p?.weight_grams ?? 250} suffix="gram" />
       </div>
+      <fieldset className="space-y-1.5">
+        <legend className={labelClass}>
+          Ukuran kemasan <span className="font-normal text-muted-foreground">(cm, opsional, untuk berat volumetrik ongkir)</span>
+        </legend>
+        <div className="grid grid-cols-3 gap-2">
+          {(
+            [
+              ["length_cm", "Panjang", p?.length_cm],
+              ["width_cm", "Lebar", p?.width_cm],
+              ["height_cm", "Tinggi", p?.height_cm],
+            ] as const
+          ).map(([nama, label, nilai]) => (
+            <label key={nama} className="block">
+              <span className="sr-only">{label} (cm)</span>
+              <input
+                name={nama}
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={300}
+                defaultValue={nilai ?? ""}
+                placeholder={label[0]}
+                className={inputClass}
+              />
+            </label>
+          ))}
+        </div>
+      </fieldset>
       <Field label="Modal per unit (Rp)" name="unit_cost" type="number" min={0} required={false} defaultValue={p ? Number(p.unit_cost) : ""} />
       <Field
         label="Bahan limbah (pisahkan dengan koma)"

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { GalatBiteship, cekTarif, pesanGalatBiteship } from "@/lib/marketplace/biteship";
 import { CORE_BASE, authHeaderMidtrans } from "@/lib/marketplace/midtrans";
-import { MIDTRANS_PRODUKSI } from "@/lib/marketplace/midtrans-mode";
+import { midtransProduksi } from "@/lib/marketplace/midtrans-mode";
 
 // GET /api/diagnosa — cek cepat koneksi toko online. Aktif saat `npm run dev`,
 // atau di produksi bila ?kunci= sama dengan CRON_SECRET.
@@ -25,7 +25,7 @@ async function cekMidtrans(): Promise<Hasil> {
   try {
     const [sandbox, produksi] = await Promise.all([tanya(CORE_BASE.sandbox), tanya(CORE_BASE.produksi)]);
     const cocok = sandbox === "404" ? "sandbox" : produksi === "404" ? "produksi" : null;
-    const mode = MIDTRANS_PRODUKSI ? "produksi" : "sandbox";
+    const mode = midtransProduksi() ? "produksi" : "sandbox";
     if (!cocok) return { ok: false, pesan: `Server key ditolak di sandbox (${sandbox}) dan produksi (${produksi}). Salin ulang kuncinya dari dashboard Midtrans.` };
     if (cocok !== mode) {
       return { ok: false, pesan: `Kunci ini milik ${cocok.toUpperCase()}, tapi aplikasi berjalan di mode ${mode.toUpperCase()}. Isi NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION=${cocok === "produksi"} lalu restart.` };
@@ -81,7 +81,7 @@ export async function GET(req: Request) {
   const [database, biteship, midtrans] = await Promise.all([cekDatabase(), cekBiteship(), cekMidtrans()]);
   return NextResponse.json(
     {
-      mode_midtrans: MIDTRANS_PRODUKSI ? "produksi" : "sandbox",
+      mode_midtrans: midtransProduksi() ? "produksi" : "sandbox",
       app_url: process.env.NEXT_PUBLIC_APP_URL ?? "(kosong, pakai alamat request)",
       fonnte_token: process.env.FONNTE_API_TOKEN?.trim() ? "terisi" : "KOSONG",
       database,

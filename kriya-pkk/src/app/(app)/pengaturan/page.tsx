@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { CirclePlus, ExternalLink, Settings, SlidersVertical, Store, Tags } from "lucide-react";
+import { CirclePlus, ExternalLink, Landmark, Settings, SlidersVertical, Store, Tags } from "lucide-react";
 import { requireMe } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { ActionForm, Field } from "@/components/action-form";
 import { Badge, Notice, PageHeader, Panel, btn } from "@/components/kriya-ui";
 import { ProfilPoskoForm } from "./profil-posko-form";
-import { addPriceType, updateGroupSettings, updatePrice } from "@/lib/actions/ops";
+import { addPriceType, updateBankAccount, updateGroupSettings, updatePrice } from "@/lib/actions/ops";
 
 // FR05 tabel harga, FR06 upah & margin
 export default async function PengaturanPage() {
@@ -15,7 +15,7 @@ export default async function PengaturanPage() {
     supabase.from("price_table").select("id, item_type, price_per_kg, is_active").order("item_type"),
     supabase
       .from("groups")
-      .select("name, slug, address, city, postal_code, whatsapp, latitude, longitude, shop_open")
+      .select("name, slug, address, city, postal_code, whatsapp, latitude, longitude, shop_open, bank_name, bank_account_no, bank_account_name")
       .eq("id", me.group!.id)
       .single(),
   ]);
@@ -43,6 +43,25 @@ export default async function PengaturanPage() {
             </Notice>
           )}
           <ProfilPoskoForm g={g} />
+        </Panel>
+      )}
+
+      {g && (
+        <Panel
+          title="Rekening posko"
+          description="Tujuan pencairan dana pembayaran online. Pembeli membayar lewat Midtrans ke pengelola KriyaPKK, lalu dicairkan ke rekening ini."
+          icon={Landmark}
+        >
+          {!g.bank_account_no && (
+            <Notice tone="warning" className="mb-4">Rekening belum diisi. Dana penjualan online belum bisa dicairkan ke posko.</Notice>
+          )}
+          <ActionForm action={updateBankAccount} submitLabel="Simpan rekening">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <Field label="Nama bank" name="bank_name" defaultValue={g.bank_name ?? ""} placeholder="BRI / BNI / BSI / Mandiri" />
+              <Field label="Nomor rekening" name="bank_account_no" defaultValue={g.bank_account_no ?? ""} placeholder="0123456789" />
+              <Field label="Atas nama" name="bank_account_name" defaultValue={g.bank_account_name ?? ""} placeholder="PKK Melati RW 04" />
+            </div>
+          </ActionForm>
         </Panel>
       )}
 

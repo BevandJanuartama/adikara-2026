@@ -4,7 +4,7 @@ import { useActionState, useState } from "react";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { Building, Building2, Eye, EyeOff, Hash, LoaderCircle, Lock, LogIn, Mail, MapPin, Phone, User, UserPlus } from "lucide-react";
-import { login, register, type FormState } from "@/lib/actions/auth";
+import { login, register, registerBuyer, type FormState } from "@/lib/actions/auth";
 import { cn } from "@/lib/utils";
 import { Notice, btn, inputClass, labelClass } from "@/components/kriya-ui";
 import { LokasiInput } from "@/components/toko/lokasi-input";
@@ -77,11 +77,28 @@ function Feedback({ state }: { state: FormState }) {
   return null;
 }
 
-export function LoginForm() {
+// Persetujuan Kebijakan Privasi (wajib saat mendaftar)
+function Persetujuan() {
+  return (
+    <label className="flex cursor-pointer items-start gap-3 text-sm text-tinta">
+      <input type="checkbox" name="consent" required className="mt-0.5 size-5 shrink-0 accent-hutan" />
+      <span>
+        Saya setuju data saya dipakai sesuai{" "}
+        <Link href="/privasi" target="_blank" className="font-semibold text-hutan underline underline-offset-4">
+          Kebijakan Privasi
+        </Link>{" "}
+        KriyaPKK.
+      </span>
+    </label>
+  );
+}
+
+export function LoginForm({ next }: { next?: string }) {
   const [state, action, pending] = useActionState(login, undefined);
 
   return (
     <form action={action} className="space-y-5">
+      {next && <input type="hidden" name="next" value={next} />}
       <Field name="email" label="Email" icon={Mail} type="email" autoComplete="email" placeholder="nama@email.com" />
       <Field
         name="password"
@@ -149,6 +166,7 @@ export function RegisterForm() {
         />
       </fieldset>
 
+      <Persetujuan />
       <Feedback state={state} />
 
       <button type="submit" disabled={pending} className={cn(btn.primary, "w-full")}>
@@ -159,19 +177,77 @@ export function RegisterForm() {
   );
 }
 
-export function AuthSwitch({ to }: { to: "login" | "daftar" }) {
-  return to === "daftar" ? (
+// Akun pembeli: cukup nama, HP, email, kata sandi
+export function BuyerRegisterForm({ next }: { next?: string }) {
+  const [state, action, pending] = useActionState(registerBuyer, undefined);
+
+  return (
+    <form action={action} className="space-y-5">
+      {next && <input type="hidden" name="next" value={next} />}
+      <Field name="full_name" label="Nama lengkap" icon={User} autoComplete="name" placeholder="Contoh: Ani Wulandari" />
+      <Field
+        name="phone"
+        label="Nomor HP / WhatsApp"
+        icon={Phone}
+        type="tel"
+        autoComplete="tel"
+        placeholder="0812xxxxxxxx"
+        hint="Dipakai posko dan ekspedisi untuk menghubungi Anda soal pesanan."
+      />
+      <Field name="email" label="Email" icon={Mail} type="email" autoComplete="email" placeholder="nama@email.com" />
+      <Field
+        name="password"
+        label="Kata sandi"
+        icon={Lock}
+        type="password"
+        minLength={8}
+        autoComplete="new-password"
+        placeholder="Minimal 8 karakter"
+      />
+      <Persetujuan />
+      <Feedback state={state} />
+
+      <button type="submit" disabled={pending} className={cn(btn.primary, "w-full")}>
+        {pending ? <LoaderCircle className="animate-spin" /> : <UserPlus />}
+        {pending ? "Membuat akun…" : "Buat akun pembeli"}
+      </button>
+    </form>
+  );
+}
+
+const tautan = "font-bold text-hutan underline-offset-4 hover:underline";
+
+export function AuthSwitch({ to, next }: { to: "login" | "daftar" | "daftar-pembeli"; next?: string }) {
+  const q = next ? `?next=${encodeURIComponent(next)}` : "";
+  if (to === "login") {
+    return (
+      <>
+        Sudah punya akun?{" "}
+        <Link href={`/login${q}`} className={tautan}>
+          Masuk di sini
+        </Link>
+      </>
+    );
+  }
+  if (to === "daftar-pembeli") {
+    return (
+      <>
+        Belum punya akun?{" "}
+        <Link href={`/daftar/pembeli${q}`} className={tautan}>
+          Daftar sebagai pembeli
+        </Link>
+      </>
+    );
+  }
+  return (
     <>
-      Belum punya akun kelompok?{" "}
-      <Link href="/daftar" className="font-bold text-hutan underline-offset-4 hover:underline">
-        Daftar di sini
-      </Link>
-    </>
-  ) : (
-    <>
-      Sudah punya akun?{" "}
-      <Link href="/login" className="font-bold text-hutan underline-offset-4 hover:underline">
-        Masuk di sini
+      Belum punya akun?{" "}
+      <Link href={`/daftar/pembeli${q}`} className={tautan}>
+        Daftar sebagai pembeli
+      </Link>{" "}
+      atau{" "}
+      <Link href="/daftar" className={tautan}>
+        daftarkan kelompok PKK
       </Link>
     </>
   );

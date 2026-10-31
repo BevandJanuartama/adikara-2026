@@ -22,30 +22,45 @@ import { MAKS_JARAK_KM, jarakKm, titikValid, type Titik } from "@/lib/marketplac
 import { normalisasiWa } from "@/lib/marketplace/wa";
 import { bayar } from "@/lib/marketplace/snap";
 import type { PoskoToko, TarifKurir } from "@/lib/marketplace/types";
+import type { KonfigSnap } from "@/lib/marketplace/midtrans-mode";
 import { FotoProduk } from "@/components/toko/foto-produk";
 import { LokasiInput } from "@/components/toko/lokasi-input";
 import { PetaLokasi } from "@/components/toko/peta-lokasi";
 
 type Metode = "ambil" | "kurir";
 
-export function CheckoutForm({ posko, clientKey }: { posko: PoskoToko; clientKey: string }) {
+export type DataPembeli = { nama: string; hp: string; email: string | null };
+export type AlamatTerakhir = { alamat: string; kota: string; kodePos: string; titik: Titik | null } | null;
+
+export function CheckoutForm({
+  posko,
+  snap,
+  pembeli,
+  alamatTerakhir,
+}: {
+  posko: PoskoToko;
+  snap: KonfigSnap;
+  pembeli: DataPembeli;
+  alamatTerakhir: AlamatTerakhir;
+}) {
   const router = useRouter();
   const semua = useKeranjang();
   const items = useMemo(() => semua.filter((i) => i.posko_slug === posko.slug), [semua, posko.slug]);
   const itemsKunci = items.map((i) => `${i.id}:${i.qty}`).join(",");
 
-  const [nama, setNama] = useState("");
-  const [hp, setHp] = useState("");
-  const [email, setEmail] = useState("");
+  // data penerima diisi dari akun pembeli (boleh diubah, mis. dikirim ke saudara)
+  const [nama, setNama] = useState(pembeli.nama);
+  const [hp, setHp] = useState(pembeli.hp);
   const [catatan, setCatatan] = useState("");
   const [metode, setMetode] = useState<Metode>("ambil");
-  const [alamat, setAlamat] = useState("");
-  const [kota, setKota] = useState("");
-  const [kodePos, setKodePos] = useState("");
-  const [titik, setTitik] = useState<Titik | null>(null);
+  const [alamat, setAlamat] = useState(alamatTerakhir?.alamat ?? "");
+  const [kota, setKota] = useState(alamatTerakhir?.kota ?? "");
+  const [kodePos, setKodePos] = useState(alamatTerakhir?.kodePos ?? "");
+  const [titik, setTitik] = useState<Titik | null>(alamatTerakhir?.titik ?? null);
 
   const [tarif, setTarif] = useState<TarifKurir[] | null>(null);
   const [pilihan, setPilihan] = useState<string>("");
+  const [infoOngkir, setInfoOngkir] = useState<{ berat: number | null; jarakTagih: number | null } | null>(null);
   const [cekSibuk, setCekSibuk] = useState(false);
   const [cekGalat, setCekGalat] = useState<string | null>(null);
   const [kirimSibuk, setKirimSibuk] = useState(false);
@@ -55,6 +70,7 @@ export function CheckoutForm({ posko, clientKey }: { posko: PoskoToko; clientKey
   useEffect(() => {
     setTarif(null);
     setPilihan("");
+    setInfoOngkir(null);
   }, [titik?.lat, titik?.lng, kodePos, itemsKunci]);
 
   const asal = { lat: Number(posko.latitude), lng: Number(posko.longitude) };
@@ -67,11 +83,26 @@ export function CheckoutForm({ posko, clientKey }: { posko: PoskoToko; clientKey
   const total = subtotal + ongkir;
 
   const hpValid = !!normalisasiWa(hp);
-  const siap =
-    items.length > 0 &&
-    nama.trim().length >= 2 &&
-    hpValid &&
-    (metode === "ambil" || (alamat.trim().length >= 10 && !!titik && !terlaluJauh && !!tarifDipilih));
+  // Alasan tombol bayar belum aktif (ditampilkan di bawah tombol)
+  const alasan =
+    items.length === 0
+      ? "Keranjang kosong."
+      : nama.trim().length < 2
+        ? "Isi nama penerima (minimal 2 huruf)."
+        : !hpValid
+          ? "Nomor HP belum benar (contoh 0812xxxxxxxx)."
+          : metode === "ambil"
+            ? null
+            : alamat.trim().length < 10
+              ? `Alamat lengkap minimal 10 karakter (sekarang ${alamat.trim().length}). Tulis jalan, nomor rumah, RT/RW.`
+              : !titik
+                ? "Tentukan titik antar."
+                : terlaluJauh
+                  ? `Alamat di luar jangkauan ${MAKS_JARAK_KM} km. Pilih ambil di posko.`
+                  : !tarifDipilih
+                    ? "Tekan Cek ongkir, lalu pilih layanan ekspedisi."
+                    : null;
+  const siap = alasan === null;
 
   async function cekOngkir() {
     if (!titik) return;
@@ -90,7 +121,8 @@ export function CheckoutForm({ posko, clientKey }: { posko: PoskoToko; clientKey
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Gagal cek ongkir");
       setTarif(json.tarif as TarifKurir[]);
-      const termurah = (json.tarif as TarifKurir[])[0];
+      setInfoOngkir({ berat: json.berat_kg ?? null, jarakTagih: json.jarak_tagih_km ?? null });
+      const termurah = [...(json.tarif as TarifKurir[])].sort((a, b) => a.price - b.price)[0];
       if (termurah) setPilihan(`${termurah.company}:${termurah.type}`);
     } catch (e) {
       setCekGalat(e instanceof Error ? e.message : "Gagal cek ongkir");
@@ -110,7 +142,7 @@ export function CheckoutForm({ posko, clientKey }: { posko: PoskoToko; clientKey
         body: JSON.stringify({
           posko: posko.slug,
           items: items.map((i) => ({ id: i.id, qty: i.qty })),
-          pembeli: { nama, hp, email },
+          pembeli: { nama, hp },
           pengiriman:
             metode === "ambil"
               ? { metode }
@@ -127,14 +159,23 @@ export function CheckoutForm({ posko, clientKey }: { posko: PoskoToko; clientKey
         }),
       });
       const json = await res.json();
+      // sesi habis: masuk lagi lalu kembali ke checkout (keranjang tetap tersimpan)
+      if (res.status === 401) {
+        router.push(`/login?next=${encodeURIComponent(`/checkout?posko=${posko.slug}`)}`);
+        return;
+      }
       if (!res.ok) throw new Error(json.error ?? "Pesanan gagal dibuat");
 
       // Pesanan sudah tercatat & stok disisihkan → keluarkan dari keranjang
       keranjang.hapusPosko(posko.slug);
       const ke = () => router.push(json.lacak);
+      // Mode uji (Midtrans sandbox belum bisa): langsung ke halaman pesanan, pengurus menandai lunas
+      if (!json.token) {
+        ke();
+        return;
+      }
       try {
-        if (!clientKey) throw new Error("NEXT_PUBLIC_MIDTRANS_CLIENT_KEY kosong");
-        await bayar(json.token, clientKey, { onSuccess: ke, onPending: ke, onError: ke, onClose: ke });
+        await bayar(json.token, snap, { onSuccess: ke, onPending: ke, onError: ke, onClose: ke });
       } catch {
         // snap.js gagal dimuat → buka halaman pembayaran Midtrans langsung
         if (json.redirect_url) window.location.href = json.redirect_url;
@@ -166,7 +207,7 @@ export function CheckoutForm({ posko, clientKey }: { posko: PoskoToko; clientKey
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start xl:grid-cols-[minmax(0,1fr)_24rem]">
         <div className="min-w-0 space-y-6">
           {/* 1. Pembeli */}
-          <Panel title="1. Data pembeli" description="Dipakai posko untuk menghubungi Anda.">
+          <Panel title="1. Penerima" description="Diisi dari akun Anda. Ubah bila paket untuk orang lain.">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <label className="block space-y-1.5">
                 <span className={labelClass}>Nama lengkap</span>
@@ -185,12 +226,11 @@ export function CheckoutForm({ posko, clientKey }: { posko: PoskoToko; clientKey
                 />
                 {hp.length > 5 && !hpValid && <span className="text-sm text-bata-ink">Nomor belum benar</span>}
               </label>
-              <label className="block space-y-1.5 md:col-span-2">
-                <span className={labelClass}>
-                  Email <span className="font-normal text-muted-foreground">(opsional, untuk bukti bayar)</span>
-                </span>
-                <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" autoComplete="email" placeholder="nama@email.com" className={inputClass} />
-              </label>
+              {pembeli.email && (
+                <p className="text-sm text-muted-foreground md:col-span-2">
+                  Bukti pembayaran dikirim Midtrans ke {pembeli.email}.
+                </p>
+              )}
             </div>
           </Panel>
 
@@ -209,8 +249,8 @@ export function CheckoutForm({ posko, clientKey }: { posko: PoskoToko; clientKey
                   aktif={metode === "kurir"}
                   onClick={() => posko.bisa_kirim && setMetode("kurir")}
                   icon={Truck}
-                  judul="Kirim kurir lokal"
-                  teks={posko.bisa_kirim ? `Ongkir dicek otomatis, maksimal ${MAKS_JARAK_KM} km dari posko.` : "Posko ini belum melayani pengiriman."}
+                  judul="Kirim lewat ekspedisi"
+                  teks={posko.bisa_kirim ? `JNE, J&T, SiCepat, Pos. Dapat nomor resi. Maks. ${MAKS_JARAK_KM} km dari posko.` : "Posko ini belum melayani pengiriman."}
                   nonaktif={!posko.bisa_kirim}
                 />
               </div>
@@ -239,6 +279,9 @@ export function CheckoutForm({ posko, clientKey }: { posko: PoskoToko; clientKey
                       placeholder="Nama jalan, nomor rumah, RT/RW, patokan"
                       className={cn(inputClass, "h-auto py-3")}
                     />
+                    {alamat.trim().length > 0 && alamat.trim().length < 10 && (
+                      <span className="text-sm text-bata-ink">Minimal 10 karakter</span>
+                    )}
                   </label>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <label className="block space-y-1.5">
@@ -262,13 +305,13 @@ export function CheckoutForm({ posko, clientKey }: { posko: PoskoToko; clientKey
                     wajib
                     awal={titik}
                     onChange={setTitik}
-                    bantuan="Kurir motor (GoSend, GrabExpress) memakai titik ini. Kurir reguler memakai kode pos."
+                    bantuan="Ongkir dihitung dari jarak titik ini ke posko dan berat paket."
                   />
 
                   {jarak !== null && (
                     <Notice tone={terlaluJauh ? "error" : "info"}>
                       Jarak dari posko ±{jarak.toFixed(1)} km.
-                      {terlaluJauh && ` Di luar jangkauan kurir lokal (maksimal ${MAKS_JARAK_KM} km). Pilih ambil di posko.`}
+                      {terlaluJauh && ` Di luar jangkauan pengiriman (maksimal ${MAKS_JARAK_KM} km). Pilih ambil di posko.`}
                     </Notice>
                   )}
 
@@ -281,13 +324,24 @@ export function CheckoutForm({ posko, clientKey }: { posko: PoskoToko; clientKey
                       {cekGalat && <Notice tone="error">{cekGalat}</Notice>}
                       {tarif && (
                         <fieldset className="space-y-2">
-                          <legend className={cn(labelClass, "mb-2")}>Pilih kurir</legend>
-                          {tarif.map((t) => {
+                          <legend className={cn(labelClass, "mb-1")}>Pilih layanan ekspedisi</legend>
+                          {infoOngkir?.berat != null && (
+                            <p className="text-sm text-muted-foreground">
+                              Berat dikenakan {infoOngkir.berat} kg
+                              {infoOngkir.jarakTagih != null && ` · perkiraan jarak jalan ${infoOngkir.jarakTagih} km`}
+                            </p>
+                          )}
+                          {tarif.map((t, idx) => {
                             const key = `${t.company}:${t.type}`;
                             const on = pilihan === key;
+                            const judulKelompok =
+                              t.kelompok && t.kelompok !== tarif[idx - 1]?.kelompok
+                                ? { reguler: "Reguler", kargo: "Kargo (ditagih minimal 10 kg)" }[t.kelompok]
+                                : null;
                             return (
+                              <div key={key}>
+                              {judulKelompok && <p className="mb-2 mt-3 text-sm font-semibold text-tinta first:mt-0">{judulKelompok}</p>}
                               <label
-                                key={key}
                                 className={cn(
                                   "flex cursor-pointer items-center gap-3 rounded-xl border bg-card px-4 py-3 transition-colors",
                                   on ? "border-hutan bg-daun-muda" : "hover:bg-daun-muda/50",
@@ -302,6 +356,7 @@ export function CheckoutForm({ posko, clientKey }: { posko: PoskoToko; clientKey
                                 </span>
                                 <span className="shrink-0 text-base font-bold tabular-nums text-tinta">{rupiah(t.price)}</span>
                               </label>
+                              </div>
                             );
                           })}
                         </fieldset>
@@ -331,7 +386,7 @@ export function CheckoutForm({ posko, clientKey }: { posko: PoskoToko; clientKey
               </span>
             </div>
             <p className="mt-3 text-base text-muted-foreground">
-              Pembayaran lewat Midtrans. Selesaikan dalam 60 menit, setelah itu stok dikembalikan ke posko.
+              Pembayaran lewat Midtrans. Selesaikan dalam 60 menit, setelah itu stok dikembalikan ke posko. Status pesanan bisa dilihat di menu Pesanan saya.
             </p>
           </Panel>
         </div>
@@ -358,7 +413,7 @@ export function CheckoutForm({ posko, clientKey }: { posko: PoskoToko; clientKey
             <div className="mt-4 divide-y border-t pt-2">
               <MoneyRow label="Subtotal produk" value={rupiah(subtotal)} />
               <MoneyRow
-                label={metode === "kurir" ? `Ongkir${tarifDipilih ? ` (${tarifDipilih.name})` : ""}` : "Ongkir"}
+                label={metode === "kurir" ? `Ongkir${tarifDipilih ? ` (${tarifDipilih.name} ${tarifDipilih.service})` : ""}` : "Ongkir"}
                 value={metode === "kurir" ? (tarifDipilih ? rupiah(ongkir) : "Belum dicek") : "Gratis"}
               />
               <MoneyRow label="Total bayar" value={rupiah(total)} strong />
@@ -368,15 +423,14 @@ export function CheckoutForm({ posko, clientKey }: { posko: PoskoToko; clientKey
               {kirimSibuk ? <LoaderCircle className="animate-spin" /> : <CreditCard />}
               {kirimSibuk ? "Menyiapkan pembayaran…" : "Bayar sekarang"}
             </button>
-            {!siap && !kirimSibuk && (
-              <p className="mt-2 text-sm text-muted-foreground">
-                {!nama.trim() || !hpValid
-                  ? "Lengkapi nama dan nomor HP."
-                  : metode === "kurir" && !tarifDipilih
-                    ? "Isi alamat, titik antar, lalu cek ongkir."
-                    : "Lengkapi data pengiriman."}
-              </p>
-            )}
+            <p className="mt-3 text-sm text-muted-foreground">
+              Dengan membayar, Anda menyetujui{" "}
+              <Link href="/privasi" target="_blank" className="font-semibold text-hutan underline underline-offset-4">
+                Kebijakan Privasi
+              </Link>
+              .
+            </p>
+            {!siap && !kirimSibuk && <p className="mt-2 text-sm font-semibold text-bata-ink">{alasan}</p>}
           </Panel>
         </aside>
       </div>

@@ -2,9 +2,10 @@ import "server-only";
 import type { TarifKurir } from "@/lib/marketplace/types";
 
 // Cek ongkir Biteship: POST https://api.biteship.com/v1/rates/couriers (header Authorization: <API key>)
-// Kurir instan (gojek, grab, paxel, lalamove, borzo) wajib koordinat; kurir reguler lebih akurat dengan kode pos.
+// Hanya ekspedisi bernomor resi (tanpa ojek online / kurir instan). Lebih akurat dengan kode pos.
 const URL_TARIF = "https://api.biteship.com/v1/rates/couriers";
-const KURIR_DEFAULT = "gojek,grab,jne,sicepat,anteraja,jnt";
+const KURIR_DEFAULT = "jne,jnt,sicepat,pos,anteraja";
+const KURIR_INSTAN = new Set(["gojek", "grab", "lalamove", "borzo", "paxel", "deliveree"]);
 
 export type Tarif = TarifKurir;
 
@@ -86,7 +87,7 @@ export async function cekTarif(asal: Lokasi, tujuan: Lokasi, items: Barang[], pa
         description: p.description ? String(p.description) : undefined,
       } satisfies Tarif;
     })
-    .filter((t) => t.company && t.type && t.price > 0)
+    .filter((t) => t.company && t.type && t.price > 0 && !KURIR_INSTAN.has(t.company) && !/instant|same.?day/i.test(t.type))
     .sort((a, b) => a.price - b.price);
 }
 
@@ -97,7 +98,7 @@ export function pesanGalatBiteship(e: GalatBiteship): string {
   }
   switch (e.code) {
     case 40001010:
-      return "Belum ada kurir aktif untuk lokasi ini. Aktifkan kurir (GoSend, GrabExpress, JNE, dll.) di dashboard Biteship, atau pilih ambil di posko.";
+      return "Belum ada kurir aktif untuk lokasi ini. Aktifkan ekspedisi (JNE, J&T, SiCepat, dll.) di dashboard Biteship, atau pilih ambil di posko.";
     case 40001001:
       return "Kode pos tidak dikenali Biteship. Periksa kode pos posko dan alamat tujuan.";
     case 40001002:

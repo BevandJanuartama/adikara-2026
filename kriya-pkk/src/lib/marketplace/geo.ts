@@ -1,4 +1,4 @@
-// Batas jangkauan kurir lokal (juga dicek ulang di database)
+// Batas jangkauan pengiriman ekspedisi dari posko (juga dicek ulang di database)
 export const MAKS_JARAK_KM = 150;
 
 export type Titik = { lat: number; lng: number };

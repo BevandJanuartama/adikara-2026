@@ -1,6 +1,7 @@
 import "server-only";
 import { headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { rupiah } from "@/lib/format";
 import { kirimWa } from "@/lib/marketplace/fonnte";
 import { cekStatus, type StatusMidtrans } from "@/lib/marketplace/midtrans";
@@ -24,52 +25,47 @@ export async function appUrlDariHeader(): Promise<string> {
   return `${proto}://${host}`;
 }
 
-type ItemRingkas = { name: string; qty: number; subtotal: number };
-
-export function pesanWaBaru(o: {
+type DetailLunas = {
   code: string;
   buyer_name: string;
   buyer_phone: string;
-  items: ItemRingkas[];
   shipping_method: "ambil" | "kurir";
-  courier_name?: string | null;
+  address: string | null;
+  buyer_city: string | null;
+  buyer_postal_code: string | null;
+  courier_name: string | null;
   shipping_cost: number;
-  address?: string | null;
   total: number;
-  url: string;
-}) {
-  const baris = o.items.map((i) => `• ${i.qty}× ${i.name} — ${rupiah(i.subtotal)}`).join("\n");
-  const kirim =
-    o.shipping_method === "kurir"
-      ? `Kurir ${o.courier_name ?? ""} (${rupiah(o.shipping_cost)})\nAlamat: ${o.address ?? "-"}`
-      : "Ambil di posko";
-  return [
-    `*Pesanan baru KriyaPKK*`,
-    `Kode: ${o.code}`,
-    `Pembeli: ${o.buyer_name} (${formatHp(o.buyer_phone)})`,
-    ``,
-    baris,
-    ``,
-    `Pengiriman: ${kirim}`,
-    `*Total: ${rupiah(o.total)}*`,
-    ``,
-    `Status: menunggu pembayaran. Stok sudah disisihkan selama 60 menit.`,
-    `Kelola pesanan: ${o.url}/pesanan`,
-  ].join("\n");
-}
+  note: string | null;
+  items: { name: string; qty: number; subtotal: number }[];
+  posko: { whatsapp: string | null } | null;
+};
 
-export function pesanWaLunas(o: { code: string; buyer_name: string; total: number; metode: string; ambil: boolean; url: string }) {
+// Satu-satunya WhatsApp toko online: ke pengurus posko saat pesanan LUNAS (berisi semua yang perlu disiapkan)
+export function pesanWaLunas(o: DetailLunas, metode: string, url: string) {
+  const kurir = o.shipping_method === "kurir";
   return [
     `*Pesanan ${o.code} LUNAS*`,
-    `Pembeli: ${o.buyer_name}`,
-    `Dibayar: ${rupiah(o.total)} lewat ${o.metode.replace(/_/g, " ").toUpperCase()}`,
+    `Dibayar ${rupiah(o.total)} lewat ${metode.replace(/_/g, " ").toUpperCase()}`,
     ``,
-    o.ambil ? `Siapkan barangnya, pembeli akan mengambil di posko.` : `Siapkan barang dan pesan kurirnya.`,
-    `Ubah status: ${o.url}/pesanan`,
-  ].join("\n");
+    ...o.items.map((i) => `• ${i.qty}× ${i.name} — ${rupiah(i.subtotal)}`),
+    ``,
+    `Pembeli: ${o.buyer_name} (${formatHp(o.buyer_phone)})`,
+    kurir
+      ? `Kirim lewat *${o.courier_name ?? "ekspedisi"}* (ongkir ${rupiah(o.shipping_cost)})\nAlamat: ${[o.address, o.buyer_city, o.buyer_postal_code].filter(Boolean).join(", ")}`
+      : `Diambil di posko`,
+    o.note ? `Catatan: ${o.note}` : null,
+    ``,
+    kurir
+      ? `Kemas & kirim lewat ekspedisi, lalu isi nomor resinya di aplikasi.`
+      : `Siapkan barangnya, lalu tandai "Siap diambil" di aplikasi.`,
+    `${url}/pesanan`,
+  ]
+    .filter((b) => b !== null)
+    .join("\n");
 }
 
-// Terapkan status dari Midtrans ke database. Dipakai webhook & halaman lacak (sinkron manual).
+// Terapkan status dari Midtrans ke database. Dipakai webhook, halaman pesanan pembeli, dan simulasi.
 export async function terapkanStatusMidtrans(s: StatusMidtrans, url: string): Promise<string> {
   const db = createAdminClient();
   const ts = s.transaction_status ?? "";
@@ -83,12 +79,17 @@ export async function terapkanStatusMidtrans(s: StatusMidtrans, url: string): Pr
       p_transaction_id: s.transaction_id ?? null,
     });
     if (error) throw new Error(error.message);
-    const r = data as { already: boolean; total: number; buyer_name: string; shipping_method: string; posko: { whatsapp: string | null } };
-    if (!r.already) {
-      await kirimWa(
-        r.posko.whatsapp,
-        pesanWaLunas({ code: s.order_id, buyer_name: r.buyer_name, total: Number(r.total), metode: s.payment_type ?? "midtrans", ambil: r.shipping_method === "ambil", url }),
-      );
+    // notifikasi ganda dari Midtrans tidak mengirim WhatsApp dua kali
+    if (!(data as { already: boolean }).already) {
+      const { data: o } = await db
+        .from("orders")
+        .select(
+          "code, buyer_name, buyer_phone, shipping_method, address, buyer_city, buyer_postal_code, courier_name, shipping_cost, total, note, items:order_items(name, qty, subtotal), posko:groups(whatsapp)",
+        )
+        .eq("code", s.order_id)
+        .maybeSingle();
+      const d = o as unknown as DetailLunas | null;
+      if (d) await kirimWa(d.posko?.whatsapp, pesanWaLunas(d, s.payment_type ?? "midtrans", url));
     }
     return "dibayar";
   }
@@ -104,7 +105,7 @@ export async function terapkanStatusMidtrans(s: StatusMidtrans, url: string): Pr
   return ts;
 }
 
-// Halaman lacak memanggil ini supaya status tetap benar walau webhook belum sampai
+// Halaman pesanan memanggil ini supaya status tetap benar walau webhook belum sampai
 // (mis. saat uji di localhost yang tidak bisa dihubungi Midtrans).
 export async function sinkronkanDenganMidtrans(code: string, url: string) {
   try {
@@ -115,39 +116,52 @@ export async function sinkronkanDenganMidtrans(code: string, url: string) {
   }
 }
 
-export type PesananPublik = {
+export type PoskoPesanan = {
+  group_id: string;
+  name: string;
+  slug: string | null;
+  address: string | null;
+  city: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  whatsapp: string | null;
+};
+
+export type PesananSaya = {
   id: string;
   code: string;
-  access_token: string;
+  group_id: string;
   status: string;
   buyer_name: string;
   buyer_phone: string;
   shipping_method: "ambil" | "kurir";
   address: string | null;
+  buyer_city: string | null;
+  buyer_postal_code: string | null;
   courier_name: string | null;
   shipping_eta: string | null;
   shipping_cost: number;
   tracking_number: string | null;
   subtotal: number;
   total: number;
+  note: string | null;
   payment_type: string | null;
   midtrans_token: string | null;
   created_at: string;
   paid_at: string | null;
-  posko: { name: string; slug: string; address: string | null; city: string | null; latitude: number | null; longitude: number | null };
   items: { name: string; qty: number; unit_price: number; subtotal: number; finished_good_id: string }[];
+  posko: PoskoPesanan | null;
 };
 
-export async function ambilPesananPublik(code: string, token: string): Promise<PesananPublik | null> {
-  if (!code || !token) return null;
-  const db = createAdminClient();
-  const { data } = await db
-    .from("orders")
-    .select(
-      "id, code, access_token, status, buyer_name, buyer_phone, shipping_method, address, courier_name, shipping_eta, shipping_cost, tracking_number, subtotal, total, payment_type, midtrans_token, created_at, paid_at, posko:groups(name, slug, address, city, latitude, longitude), items:order_items(name, qty, unit_price, subtotal, finished_good_id)",
-    )
-    .eq("code", code)
-    .eq("access_token", token)
-    .maybeSingle();
-  return (data as unknown as PesananPublik) ?? null;
+const KOLOM =
+  "id, code, group_id, status, buyer_name, buyer_phone, shipping_method, address, buyer_city, buyer_postal_code, courier_name, shipping_eta, shipping_cost, tracking_number, subtotal, total, note, payment_type, midtrans_token, created_at, paid_at, items:order_items(name, qty, unit_price, subtotal, finished_good_id)";
+
+// Pesanan milik pembeli yang login (RLS: buyer_id = auth.uid()), plus info poskonya
+export async function ambilPesananSaya(userId: string, code?: string): Promise<PesananSaya[]> {
+  const supabase = await createClient();
+  let q = supabase.from("orders").select(KOLOM).eq("buyer_id", userId).order("created_at", { ascending: false }).limit(100);
+  if (code) q = q.eq("code", code);
+  const [{ data }, { data: posko }] = await Promise.all([q, supabase.rpc("posko_pesanan_saya")]);
+  const peta = new Map(((posko ?? []) as PoskoPesanan[]).map((p) => [p.group_id, p]));
+  return ((data ?? []) as unknown as Omit<PesananSaya, "posko">[]).map((o) => ({ ...o, posko: peta.get(o.group_id) ?? null }));
 }

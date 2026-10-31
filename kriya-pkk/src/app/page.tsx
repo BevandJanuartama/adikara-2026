@@ -127,7 +127,7 @@ const AUDIENCE = [
 
 export default async function Home() {
   const me = await getMe();
-  if (me) redirect(me.role === "admin" ? "/admin" : "/beranda");
+  if (me) redirect(me.role === "admin" ? "/admin" : me.role === "pembeli" ? "/katalog" : "/beranda");
 
   return (
     <div

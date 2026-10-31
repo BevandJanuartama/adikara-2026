@@ -1,0 +1,215 @@
+Pager usage is off.
+UPDATE 1
+== 1. daftar akun pembeli lewat metadata; metadata peran palsu diabaikan
+INSERT 0 3
+      email      |  role   |     phone     | tanpa_kelompok | setuju_privasi 
+-----------------+---------+---------------+----------------+----------------
+ ani@contoh.id   | pembeli | 6281234567890 | t              | t
+ budi@contoh.id  | pembeli | 6281399990000 | t              | t
+ nakal@contoh.id | anggota |               | t              | f
+(3 rows)
+
+== 2. pesanan wajib akun pembeli (diisi server dari sesi login)
+SET
+ERROR:  AKUN_PEMBELI_WAJIB
+CONTEXT:  PL/pgSQL function public.create_order(text,jsonb,jsonb,jsonb,text) line 21 at RAISE
+ERROR:  AKUN_PEMBELI_WAJIB
+CONTEXT:  PL/pgSQL function public.create_order(text,jsonb,jsonb,jsonb,text) line 21 at RAISE
+ milik_ani |  total   | shipping_cost | courier_name 
+-----------+----------+---------------+--------------
+ t         | 40650.00 |       8650.00 | JNE REG
+(1 row)
+
+ hp_profil_ani_diperbarui 
+--------------------------
+ 6285711112222
+(1 row)
+
+RESET
+== 3. pembeli hanya melihat pesanannya sendiri
+SET
+              set_config              
+--------------------------------------
+ bdb35c75-9484-443a-9239-0242c40d9e03
+(1 row)
+
+ pesanan_sendiri 
+-----------------
+ t
+(1 row)
+
+ item_terlihat 
+---------------
+             1
+(1 row)
+
+     name     |   whatsapp    
+--------------+---------------
+ PKK Sukapura | 6281277778888
+(1 row)
+
+ kelompok_terlihat 
+-------------------
+                 0
+(1 row)
+
+ kas_terlihat 
+--------------
+            0
+(1 row)
+
+ERROR:  AKSES_DITOLAK: khusus pengurus kelompok aktif
+CONTEXT:  PL/pgSQL function public._require_pengurus() line 5 at RAISE
+PL/pgSQL function public.set_order_status(uuid,text,text) line 3 during statement block local variable initialization
+ERROR:  AKSES_DITOLAK: khusus pengurus kelompok aktif
+CONTEXT:  PL/pgSQL function public._require_pengurus() line 5 at RAISE
+SQL function "my_platform_balance" statement 1
+UPDATE 0
+  role   
+---------
+ pembeli
+(1 row)
+
+              set_config              
+--------------------------------------
+ 57318ea7-e27e-4415-bfef-a791ee752af3
+(1 row)
+
+ pesanan_ani_terlihat_budi 
+---------------------------
+                         0
+(1 row)
+
+RESET
+== 4. lunas lalu dikirim: resi ekspedisi wajib, bisa diperbaiki
+SET
+ status_lunas 
+--------------
+ dibayar
+(1 row)
+
+RESET
+SET
+              set_config              
+--------------------------------------
+ 232b5904-69c1-4aec-8aa9-d517d14059cb
+(1 row)
+
+ERROR:  RESI_WAJIB
+CONTEXT:  PL/pgSQL function public.set_order_status(uuid,text,text) line 20 at RAISE
+ERROR:  RESI_TIDAK_VALID
+CONTEXT:  PL/pgSQL function public.set_order_status(uuid,text,text) line 21 at RAISE
+ set_order_status 
+------------------
+ dikirim
+(1 row)
+
+ set_order_status 
+------------------
+ dikirim
+(1 row)
+
+ resi_terakhir 
+---------------
+ JNE0123456780
+(1 row)
+
+              set_config              
+--------------------------------------
+ bdb35c75-9484-443a-9239-0242c40d9e03
+(1 row)
+
+ status  | resi_dilihat_pembeli 
+---------+----------------------
+ dikirim | JNE0123456780
+(1 row)
+
+              set_config              
+--------------------------------------
+ 232b5904-69c1-4aec-8aa9-d517d14059cb
+(1 row)
+
+ set_order_status 
+------------------
+ selesai
+(1 row)
+
+RESET
+== 5. dana online di platform & pencairan ke posko
+SET
+ budi_simulasi 
+---------------
+ dibayar
+(1 row)
+
+RESET
+SET
+              set_config              
+--------------------------------------
+ 232b5904-69c1-4aec-8aa9-d517d14059cb
+(1 row)
+
+ saldo_posko | simulasi_tidak_dihitung 
+-------------+-------------------------
+ 40650.00    | 7000.00
+(1 row)
+
+ERROR:  new row for relation "groups" violates check constraint "groups_bank_no_check"
+UPDATE 1
+ERROR:  AKSES_DITOLAK: khusus admin platform
+CONTEXT:  PL/pgSQL function public._require_admin() line 4 at RAISE
+SQL statement "SELECT public._require_admin()"
+PL/pgSQL function public.admin_record_payout(uuid,numeric,numeric,text,text,date) line 4 at PERFORM
+              set_config              
+--------------------------------------
+ 7cff4898-97bf-457c-9e62-58773bb665ed
+(1 row)
+
+     name     | bank_account_no | online_total |  saldo   
+--------------+-----------------+--------------+----------
+ PKK Sukapura | 012301000123567 |     40650.00 | 40650.00
+(1 row)
+
+ERROR:  MELEBIHI_SALDO: saldo posko 40650.00
+CONTEXT:  PL/pgSQL function public.admin_record_payout(uuid,numeric,numeric,text,text,date) line 10 at RAISE
+ cair_ok 
+---------
+ t
+(1 row)
+
+ saldo_setelah_cair 
+--------------------
+               0.00
+(1 row)
+
+              set_config              
+--------------------------------------
+ 232b5904-69c1-4aec-8aa9-d517d14059cb
+(1 row)
+
+  amount  |   fee   | reference 
+----------+---------+-----------
+ 38650.00 | 2000.00 | TRF-001
+(1 row)
+
+              set_config              
+--------------------------------------
+ 8256b750-7371-4b7e-82c3-499def4ad71f
+(1 row)
+
+ pencairan_terlihat_perajin 
+----------------------------
+                          0
+(1 row)
+
+              set_config              
+--------------------------------------
+ bdb35c75-9484-443a-9239-0242c40d9e03
+(1 row)
+
+ pencairan_terlihat_pembeli 
+----------------------------
+                          0
+(1 row)
+
+RESET

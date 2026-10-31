@@ -1,7 +1,7 @@
 import "server-only";
 import { createHash, timingSafeEqual } from "node:crypto";
 
-import { MIDTRANS_PRODUKSI } from "@/lib/marketplace/midtrans-mode";
+import { midtransProduksi } from "@/lib/marketplace/midtrans-mode";
 
 // Sandbox/produksi diatur NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION (lihat midtrans-mode.ts)
 // Kode singkat untuk pesan error di produksi: MT401 (kunci ditolak), MT400 (data ditolak), KONFIG (env kosong), dst.
@@ -18,8 +18,8 @@ const serverKey = () => {
 };
 export const SNAP_BASE = { sandbox: "https://app.sandbox.midtrans.com/snap/v1", produksi: "https://app.midtrans.com/snap/v1" };
 export const CORE_BASE = { sandbox: "https://api.sandbox.midtrans.com", produksi: "https://api.midtrans.com" };
-const snapBase = () => (MIDTRANS_PRODUKSI ? SNAP_BASE.produksi : SNAP_BASE.sandbox);
-const coreBase = () => (MIDTRANS_PRODUKSI ? CORE_BASE.produksi : CORE_BASE.sandbox);
+const snapBase = () => (midtransProduksi() ? SNAP_BASE.produksi : SNAP_BASE.sandbox);
+const coreBase = () => (midtransProduksi() ? CORE_BASE.produksi : CORE_BASE.sandbox);
 export const authHeaderMidtrans = () => "Basic " + Buffer.from(serverKey() + ":").toString("base64");
 const authHeader = authHeaderMidtrans;
 
@@ -63,7 +63,7 @@ export async function buatTransaksiSnap(p: {
     const pesan = json?.error_messages?.join(", ") ?? res.statusText;
     const petunjuk =
       res.status === 401
-        ? ` (kunci ditolak di mode ${MIDTRANS_PRODUKSI ? "PRODUKSI" : "SANDBOX"}; cek MIDTRANS_SERVER_KEY dan NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION)`
+        ? ` (kunci ditolak di mode ${midtransProduksi() ? "PRODUKSI" : "SANDBOX"}; cek MIDTRANS_SERVER_KEY dan NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION)`
         : "";
     throw new GalatMidtrans(`Midtrans ${res.status}: ${pesan}${petunjuk}`, `MT${res.status}`);
   }

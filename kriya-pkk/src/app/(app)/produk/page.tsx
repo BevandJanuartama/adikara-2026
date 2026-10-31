@@ -17,7 +17,7 @@ export default async function ProdukPage() {
   const [{ data: goods }, { data: sales }] = await Promise.all([
     supabase
       .from("finished_goods")
-      .select("id, name, qty, unit_cost, sell_price, category, description, waste_materials, weight_grams, photo_path, is_listed")
+      .select("id, name, qty, unit_cost, sell_price, category, description, waste_materials, weight_grams, length_cm, width_cm, height_cm, photo_path, is_listed")
       .order("qty", { ascending: false })
       .order("created_at", { ascending: false }),
     supabase

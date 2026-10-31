@@ -17,4 +17,5 @@ export type TarifKurir = {
   price: number;
   eta: string;
   description?: string;
+  kelompok?: "reguler" | "kargo";
 };

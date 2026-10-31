@@ -12,6 +12,7 @@ import {
   Menu,
   CirclePlus,
   Settings,
+  Wallet,
   ShoppingBag,
   UserCheck,
   UsersRound,
@@ -79,7 +80,15 @@ export const SIDEBAR: Record<Role, NavGroup[]> = {
       ],
     },
   ],
-  admin: [{ items: [{ href: "/admin", label: "Mitra PKK", icon: Building2 }] }],
+  admin: [
+    {
+      items: [
+        { href: "/admin", label: "Mitra PKK", icon: Building2 },
+        { href: "/admin/pencairan", label: "Pencairan dana", icon: Wallet },
+      ],
+    },
+  ],
+  pembeli: [],
 };
 
 // Navigasi bawah HP/tablet: maksimal 5 tombol, "Setor" ditonjolkan
@@ -98,7 +107,11 @@ export const BOTTOM: Record<Role, NavItem[]> = {
     { href: "/produksi", label: "Produksi", icon: Factory },
     { href: "/upah", label: "Upah", icon: Coins },
   ],
-  admin: [{ href: "/admin", label: "Mitra", icon: Building2 }],
+  admin: [
+    { href: "/admin", label: "Mitra", icon: Building2 },
+    { href: "/admin/pencairan", label: "Pencairan", icon: Wallet },
+  ],
+  pembeli: [],
 };
 
 // Menu yang paling spesifik menang (mis. /setoran/baru tidak ikut menyalakan /setoran)
@@ -112,4 +125,5 @@ export const ROLE_LABEL: Record<Role, string> = {
   pengurus: "Pengurus",
   anggota: "Anggota perajin",
   admin: "Admin platform",
+  pembeli: "Pembeli",
 };

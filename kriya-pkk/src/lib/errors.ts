@@ -19,7 +19,7 @@ const MESSAGES: Record<string, string> = {
   KERANJANG_KOSONG: "Keranjang masih kosong.",
   ALAMAT_WAJIB: "Alamat pengiriman wajib diisi.",
   LOKASI_WAJIB: "Tentukan titik lokasi pengiriman dulu.",
-  DI_LUAR_JANGKAUAN: "Alamat di luar jangkauan kurir lokal",
+  DI_LUAR_JANGKAUAN: "Alamat di luar jangkauan pengiriman",
   ONGKIR_TIDAK_VALID: "Ongkir belum dihitung. Cek ongkir dulu.",
   METODE_KIRIM_TIDAK_VALID: "Pilih cara pengiriman.",
   PRODUK_TIDAK_DITEMUKAN: "Produk tidak ditemukan atau sudah tidak dijual.",
@@ -31,12 +31,18 @@ const MESSAGES: Record<string, string> = {
   PESANAN_AMBIL_DI_POSKO: "Pesanan ini diambil di posko, bukan dikirim kurir.",
   PESANAN_DIKIRIM_KURIR: "Pesanan ini dikirim kurir, bukan diambil di posko.",
   NOMINAL_TIDAK_SESUAI: "Nominal pembayaran tidak sesuai tagihan",
+  AKUN_PEMBELI_WAJIB: "Masuk dengan akun pembeli untuk memesan.",
+  RESI_WAJIB: "Isi nomor resi ekspedisi sebelum menandai pesanan dikirim.",
+  RESI_TIDAK_VALID: "Nomor resi tidak valid (6–40 karakter).",
+  MELEBIHI_SALDO: "Jumlah pencairan melebihi saldo dana online posko",
+  DATA_TIDAK_DITEMUKAN: "Data tidak ditemukan.",
 };
 
 export function friendlyError(message: string | undefined | null): string {
   if (!message) return "Terjadi kesalahan. Coba lagi.";
   const match = message.match(/^([A-Z_]+)(?::\s*(.*))?$/);
   if (!match) {
+    if (message.includes("groups_bank_no_check")) return "Nomor rekening hanya angka, 5–20 digit.";
     if (message.includes("row-level security") || message.includes("permission denied")) {
       return MESSAGES.AKSES_DITOLAK;
     }

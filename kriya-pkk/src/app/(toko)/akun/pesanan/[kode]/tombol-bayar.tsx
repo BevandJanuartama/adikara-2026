@@ -6,8 +6,9 @@ import { CreditCard, LoaderCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { btn, Notice } from "@/components/kriya-ui";
 import { bayar } from "@/lib/marketplace/snap";
+import type { KonfigSnap } from "@/lib/marketplace/midtrans-mode";
 
-export function TombolBayar({ code, token, clientKey }: { code: string; token: string; clientKey: string }) {
+export function TombolBayar({ code, snap }: { code: string; snap: KonfigSnap }) {
   const router = useRouter();
   const [sibuk, setSibuk] = useState(false);
   const [galat, setGalat] = useState<string | null>(null);
@@ -19,7 +20,7 @@ export function TombolBayar({ code, token, clientKey }: { code: string; token: s
       const res = await fetch("/api/pesanan/bayar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, t: token }),
+        body: JSON.stringify({ code }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Gagal membuka pembayaran");
@@ -27,7 +28,7 @@ export function TombolBayar({ code, token, clientKey }: { code: string; token: s
         setSibuk(false);
         router.refresh();
       };
-      await bayar(json.token, clientKey, { onSuccess: muatUlang, onPending: muatUlang, onError: muatUlang, onClose: muatUlang });
+      await bayar(json.token, snap, { onSuccess: muatUlang, onPending: muatUlang, onError: muatUlang, onClose: muatUlang });
     } catch (e) {
       setGalat(e instanceof Error ? e.message : "Gagal membuka pembayaran");
       setSibuk(false);

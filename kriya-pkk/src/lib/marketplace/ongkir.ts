@@ -2,11 +2,22 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { GalatBiteship, cekTarif, pesanGalatBiteship, type Tarif } from "@/lib/marketplace/biteship";
 import { MAKS_JARAK_KM, jarakKm, titikValid, type Titik } from "@/lib/marketplace/geo";
+import { tarifManual, type RincianBerat } from "@/lib/marketplace/ongkir-manual";
 import type { PoskoToko } from "@/lib/marketplace/types";
 
 export type { PoskoToko };
 
-type Produk = { id: string; name: string; sell_price: number; qty: number; weight_grams: number; posko_slug: string };
+type Produk = {
+  id: string;
+  name: string;
+  sell_price: number;
+  qty: number;
+  weight_grams: number;
+  length_cm: number | null;
+  width_cm: number | null;
+  height_cm: number | null;
+  posko_slug: string;
+};
 
 export class KesalahanToko extends Error {
   constructor(message: string, public status = 400) {
@@ -32,11 +43,22 @@ export async function muatKeranjang(slug: string, items: { id: string; qty: numb
   return { posko: posko as PoskoToko, baris };
 }
 
+// Mode ongkir: "manual" (default, tabel tarif di ongkir-manual.ts) atau "biteship" (API Biteship)
+export const MODE_ONGKIR = process.env.ONGKIR_MODE === "biteship" ? "biteship" : "manual";
+
 export async function hitungOngkir(
   posko: PoskoToko,
-  baris: { name: string; sell_price: number; weight_grams: number; qtyPesan: number }[],
+  baris: {
+    name: string;
+    sell_price: number;
+    weight_grams: number;
+    qtyPesan: number;
+    length_cm?: number | null;
+    width_cm?: number | null;
+    height_cm?: number | null;
+  }[],
   tujuan: Titik & { postal?: string | null },
-): Promise<{ jarakKm: number; tarif: Tarif[] }> {
+): Promise<{ jarakKm: number; tarif: Tarif[]; berat?: RincianBerat; jarakTagihKm?: number }> {
   const asal = { lat: Number(posko.latitude), lng: Number(posko.longitude) };
   if (!posko.bisa_kirim || !titikValid(asal)) {
     throw new KesalahanToko("Posko ini belum mengisi titik lokasi, jadi hanya bisa ambil di posko.");
@@ -45,10 +67,18 @@ export async function hitungOngkir(
   const jarak = jarakKm(asal, tujuan);
   if (jarak > MAKS_JARAK_KM) {
     throw new KesalahanToko(
-      `Alamat berjarak ${jarak.toFixed(0)} km dari posko. Pengiriman kurir lokal maksimal ${MAKS_JARAK_KM} km, pilih ambil di posko.`,
+      `Alamat berjarak ${jarak.toFixed(0)} km dari posko. Pengiriman maksimal ${MAKS_JARAK_KM} km, pilih ambil di posko.`,
       422,
     );
   }
+  if (MODE_ONGKIR === "manual") {
+    const m = tarifManual(
+      jarak,
+      baris.map((b) => ({ weight_grams: b.weight_grams, qty: b.qtyPesan, length_cm: b.length_cm, width_cm: b.width_cm, height_cm: b.height_cm })),
+    );
+    return { jarakKm: jarak, tarif: m.tarif, berat: m.berat, jarakTagihKm: m.jarakTagihKm };
+  }
+
   const barang = baris.map((b) => ({ name: b.name, value: Number(b.sell_price), weight: b.weight_grams, quantity: b.qtyPesan }));
   try {
     let tarif: Tarif[];

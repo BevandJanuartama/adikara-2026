@@ -191,7 +191,15 @@ export async function updateShopProfile(_p: FormState, fd: FormData): Promise<Fo
 export async function saveProduct(id: string | null, _p: FormState, fd: FormData): Promise<FormState> {
   const category = str(fd, "category");
   if (!isKategori(category)) return { error: "Pilih kategori" };
+  // ukuran kemasan (cm): kosong/0 = tidak diisi
+  const dim = (k: string) => {
+    const v = Math.round(num(fd, k));
+    return v > 0 ? v : null;
+  };
+  const ukuran = { length_cm: dim("length_cm"), width_cm: dim("width_cm"), height_cm: dim("height_cm") };
+  if (Object.values(ukuran).some((v) => v !== null && v > 300)) return { error: "Ukuran kemasan maksimal 300 cm" };
   const payload = {
+    ...ukuran,
     name: str(fd, "name"),
     category,
     description: str(fd, "description"),
@@ -220,5 +228,23 @@ export async function setOrderStatus(orderId: string, status: string, _p: FormSt
   });
   if (error) return { error };
   revalidatePath("/pesanan");
-  return { message: "Status pesanan diperbarui." };
+  return { message: status === "dikirim" ? "Nomor resi tersimpan. Pembeli bisa melihatnya di Pesanan saya." : "Status pesanan diperbarui." };
+}
+
+// ---------- Rekening posko untuk pencairan dana pembayaran online ----------
+export async function updateBankAccount(_p: FormState, fd: FormData): Promise<FormState> {
+  const me = await requireMe(["pengurus"]);
+  const bank = str(fd, "bank_name");
+  const noRek = str(fd, "bank_account_no").replace(/[\s.-]/g, "");
+  const pemilik = str(fd, "bank_account_name");
+  if (!bank || !noRek || !pemilik) return { error: "Isi nama bank, nomor rekening, dan nama pemilik rekening" };
+  if (!/^\d{5,20}$/.test(noRek)) return { error: "Nomor rekening hanya angka, 5–20 digit" };
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("groups")
+    .update({ bank_name: bank, bank_account_no: noRek, bank_account_name: pemilik })
+    .eq("id", me.group!.id);
+  if (error) return { error: friendlyError(error.message) };
+  revalidatePath("/pengaturan");
+  return { message: "Rekening posko disimpan." };
 }

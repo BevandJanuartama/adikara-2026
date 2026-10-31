@@ -12,6 +12,7 @@ export default async function StatusPage() {
   const me = await getMe();
   if (!me) redirect("/login");
   if (me.role === "admin") redirect("/admin");
+  if (me.role === "pembeli") redirect("/akun/pesanan");
   if (me.isActive && me.group?.status === "active") redirect("/beranda");
 
   let title = "Menunggu aktivasi";
