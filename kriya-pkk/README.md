@@ -81,7 +81,7 @@ Warga setor sampah → saldo/tunai → stok bahan → ide kerajinan → produksi
 → dana online dicairkan admin ke rekening posko → kas & laporan dampak
 ```
 
-Alur lengkap 24 langkah ada di [`docs/ALUR-KRIYAPKK.md`](docs/ALUR-KRIYAPKK.md).
+Alur lengkap ada di [`../docs/8_flow_cara_kerja_v2.2.md`](../docs/8_flow_cara_kerja_v2.2.md).
 
 ## Teknologi & arsitektur
 
@@ -146,7 +146,7 @@ supabase/
   reset_dan_seed.sql  kosongkan data + akun demo
   seed_akun_demo.sql  akun demo + 9 produk contoh (opsional)
   tests/              uji database di Postgres lokal
-docs/                 ALUR-KRIYAPKK.md, PRD, SRS, dll.
+../docs/              BRD, PRD, SRS, FRD, SDD, alur kerja (di akar repositori)
 vercel.json           cron harian /api/keepalive
 ```
 
