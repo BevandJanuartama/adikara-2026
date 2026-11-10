@@ -14,7 +14,7 @@ adikara-2026/
 │   ├── src/              # Halaman, komponen, logika bisnis, integrasi
 │   ├── supabase/         # Migrasi database dan uji RLS/transaksi beserta hasilnya
 │   └── public/           # Ikon PWA
-└── docs/                 # Dokumentasi pembuatan software (v2.0), lihat docs/README.md
+└── docs/                 # Dokumentasi pembuatan software (v2.1), lihat docs/README.md
 ```
 
 ## Dokumentasi

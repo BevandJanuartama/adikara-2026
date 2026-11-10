@@ -45,7 +45,7 @@ Batasan:
 
 ## 4. Organisasi dan peran
 
-Tim tiga orang (Muhammad Bevand Januartama, Tama Adkhiya Raditya Putra, Azwina Nanda Kinanti). Dari riwayat git: kode aplikasi dikerjakan akun `BevandJanuartama`; dokumen dan struktur repositori dikerjakan akun `Tama1323`. Pembagian peran formal tidak tercatat.
+Tim tiga orang; nama berikut berasal dari tim dan tidak dapat diverifikasi dari repositori (Muhammad Bevand Januartama, Tama Adkhiya Raditya Putra, Azwina Nanda Kinanti). Dari riwayat git: kode aplikasi dikerjakan akun `BevandJanuartama`; dokumen dan struktur repositori dikerjakan akun `Tama1323`. Pembagian peran formal tidak tercatat.
 
 ## 5. Jadwal: rencana dan realisasi
 
@@ -136,3 +136,4 @@ Tidak ada pengadaan berbayar. Akun layanan (Supabase, Vercel, Google AI Studio, 
 |---|---|---|
 | 1.0 | 25 Okt 2026 | Rencana awal |
 | 2.0 | 9 Nov 2026 | Menjadi rencana dan realisasi; lingkup mencakup toko online; risiko dan perubahan baru; kriteria berstatus |
+| 2.1 | 10 Nov 2026 | Angka riwayat git diverifikasi; nama anggota ditandai belum terverifikasi dari repositori |

@@ -1,6 +1,6 @@
 # Alur dan Cara Kerja KriyaPKK
 
-Versi: 2.0 (diselaraskan dengan kode commit `aa876a4`, 1 November 2026)
+Versi: 2.1 (diselaraskan dengan kode commit `aa876a4`, 1 November 2026, dan aplikasi live; diverifikasi 10 November 2026)
 Menggantikan versi awal (tersedia di riwayat git).
 Karya Inovasi Perangkat Lunak, ADIKARA 2026, Fakultas Informatika Telkom University.
 
@@ -151,9 +151,9 @@ Untuk demo final 7 menit tambahkan: checkout pembeli (sandbox), tanda lunas dan 
 
 ## 7. Berkas terkait
 
-- `0_BRD_v2.0.md` sampai `6_SDD_v2.0.md`: BRD, PRD, SRS, FRD, PMP, WBS, SDD (versi 2.0).
-- `7_project_lengkap_v2.0.md`: konsep dan arsitektur ringkas.
-- `../00_ANALISIS_KESESUAIAN_DOKUMEN.md`: daftar selisih dokumen lama dengan kode.
+- `0_BRD_v2.1.md` sampai `6_SDD_v2.1.md`: BRD, PRD, SRS, FRD, PMP, WBS, SDD (versi 2.0).
+- `7_project_lengkap_v2.1.md`: konsep dan arsitektur ringkas.
+- `00_ANALISIS_KESESUAIAN_DOKUMEN.md`: daftar selisih dokumen lama dengan kode.
 - Dokumen versi 1.0 sudah dihapus dari repositori dan hanya ada di riwayat git.
 
 ## Riwayat revisi
@@ -162,3 +162,4 @@ Untuk demo final 7 menit tambahkan: checkout pembeli (sandbox), tanda lunas dan 
 |---|---|---|
 | 1.0 | 25 Okt 2026 | Versi awal |
 | 2.0 | 9 Nov 2026 | AI tidak menaksir harga dan berat; nama endpoint dan tabel sesuai kode; stok dipotong saat batch dimulai; upah dicatat pengurus; alur toko online dan dana online; hapus estimasi karbon dan poin sembako; contoh hitungan memakai aturan aplikasi |
+| 2.1 | 10 Nov 2026 | Tautan berkas terkait dirapikan |

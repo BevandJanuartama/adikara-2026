@@ -1,7 +1,7 @@
 # FRD: Functional Requirements Document
 
 Produk: KriyaPKK
-Versi: 2.0 (diselaraskan dengan kode commit `aa876a4`, 1 November 2026)
+Versi: 2.1 (diselaraskan dengan kode commit `aa876a4`, 1 November 2026, dan aplikasi live; diverifikasi 10 November 2026)
 Menggantikan: FRD 1.0 (25 Oktober 2026, "tanpa marketplace")
 
 ## Cara membaca
@@ -22,7 +22,7 @@ Nomor FR01 sampai FR37 dipertahankan dari versi 1.0 agar keterlacakan tidak putu
 
 | ID | Fungsi | Aktor | Status | Perilaku sebenarnya |
 |---|---|---|---|---|
-| FR01 | Pendaftaran kelompok | PGR | Ada | Input: nama kelompok, alamat, kota, kode pos, WhatsApp, titik lokasi, nama pengurus, email, kata sandi, persetujuan privasi. Terbentuk kelompok berstatus `pending`, akun berperan `pengurus`, dan 7 harga awal. Peran dan kelompok dari metadata pendaftaran tidak pernah dipercaya |
+| FR01 | Pendaftaran kelompok | PGR | Ada | Input: nama kelompok, alamat, kota, kode pos, WhatsApp, titik lokasi, nama pengurus, email, kata sandi, persetujuan privasi. Wajib: nama kelompok (minimal 3 huruf), alamat posko (minimal 5), kota (minimal 3), WhatsApp, nama pengurus (minimal 2), email, kata sandi (minimal 8), persetujuan; kode pos dan titik lokasi opsional (dapat diisi nanti di Pengaturan). Terbentuk kelompok berstatus `pending`, akun berperan `pengurus`, dan 7 harga awal. Peran dan kelompok dari metadata pendaftaran tidak pernah dipercaya |
 | FR02 | Aktivasi mitra | ADM | Ada | Admin mengubah status `pending`, `active`, atau `inactive`. Biaya aktivasi diterima di luar sistem. Kelompok belum aktif hanya melihat halaman `/status` |
 | FR03 | Kelola anggota | PGR | Sebagian | Pengurus membuat akun (nama, email, kata sandi minimal 8 karakter, peran anggota atau pengurus; email langsung terkonfirmasi), menonaktifkan, dan mengaktifkan. Tidak ada pendaftaran lewat nomor HP. Pengurus tidak bisa menonaktifkan dirinya sendiri; tidak ada fitur hapus akun |
 | FR04 | Autentikasi dan peran | semua | Ada | Email dan kata sandi (Supabase Auth). Empat peran: admin, pengurus, anggota, pembeli. Penjaga halaman `requireMe` dan `proxy.ts`. Akses lintas kelompok ditolak RLS |
@@ -164,7 +164,7 @@ Nomor FR01 sampai FR37 dipertahankan dari versi 1.0 agar keterlacakan tidak putu
 
 | ID | Fungsi | Aktor | Status | Perilaku sebenarnya |
 |---|---|---|---|---|
-| FR58 | Keepalive dan diagnosa | SIS | Ada | Cron harian 01.00 UTC memanggil `/api/keepalive` (dilindungi `CRON_SECRET`): menjaga Supabase gratis aktif dan menutup pesanan kedaluwarsa. `/api/diagnosa` memeriksa database, mode dan kunci Midtrans, serta Fonnte tanpa menampilkan kunci |
+| FR58 | Keepalive dan diagnosa | SIS | Ada | Cron harian 01.00 UTC memanggil `/api/keepalive` (dilindungi `CRON_SECRET`): menjaga Supabase gratis aktif dan menutup pesanan kedaluwarsa. `/api/diagnosa` memeriksa database (fungsi katalog), mode dan kunci Midtrans, Biteship, dan Fonnte tanpa menampilkan kunci; aktif saat `npm run dev`, atau di produksi lewat parameter `?kunci=` yang sama dengan `CRON_SECRET` |
 
 ## Rencana (belum ada, tidak termasuk FR di atas)
 
@@ -200,3 +200,4 @@ Komisi platform 5% otomatis dan pembagian dana 95:5; pencairan otomatis (Midtran
 |---|---|---|
 | 1.0 | 25 Okt 2026 | Versi awal, tanpa marketplace |
 | 2.0 | 9 Nov 2026 | Status per fungsi; koreksi FR03, FR07, FR12, FR23, FR31, FR33, FR37; FR38 sampai FR58 ditambahkan; bagian rencana |
+| 2.1 | 10 Nov 2026 | FR01 (kolom wajib dan opsional di pendaftaran), FR58 (cakupan diagnosa dan cara akses) |

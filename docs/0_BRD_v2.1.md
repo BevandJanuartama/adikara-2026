@@ -1,7 +1,7 @@
 # BRD: Business Requirements Document
 
 **Nama proyek:** KriyaPKK
-**Versi:** 2.0 (diselaraskan dengan kode commit `aa876a4`, 1 November 2026)
+**Versi:** 2.1 (diselaraskan dengan kode commit `aa876a4`, 1 November 2026, dan aplikasi live; diverifikasi 10 November 2026)
 **Menggantikan:** BRD 1.0 (25 Oktober 2026)
 **Konteks:** ADIKARA 2026, Divisi Inovasi Software dan Entrepreneurship
 **Institusi:** Fakultas Informatika, Universitas Telkom
@@ -104,6 +104,8 @@ Angka TAM, SAM, dan SOM pada BRD 1.0 (83.000 desa dan kelurahan; sekitar 7.500 d
 - Sampah organik dan pangan olahan pada setoran.
 
 ### 6.3 Keputusan terbuka
+Teks halaman katalog di aplikasi live menyebut produk dari "minyak jelantah, sampai sisa dapur". Itu bertentangan dengan batas setoran yang hanya menerima sampah anorganik (BR-01) dan memperkuat perlunya keputusan di bawah.
+
 Katalog saat ini menerima kategori **kuliner** dan **pupuk**. Bila produk pangan dijual, diperlukan izin P-IRT atau BPOM. Tim perlu memutuskan: membatasi kategori ke kerajinan dan kebersihan, atau menyiapkan persyaratan izin.
 
 ## 7. Aturan bisnis inti
@@ -129,7 +131,7 @@ Katalog saat ini menerima kategori **kuliner** dan **pupuk**. Bila produk pangan
 
 | Sumber | Status | Keterangan |
 |---|---|---|
-| Biaya aktivasi sekali bayar, rencana Rp250.000 per kelompok | Rencana | Aktivasi dilakukan admin setelah biaya diterima di luar aplikasi. Tidak ada biaya bulanan |
+| Biaya aktivasi sekali bayar, rencana Rp250.000 per kelompok (angka tim, **belum bersumber**; tidak ada di aplikasi) | Rencana | Aktivasi dilakukan admin setelah biaya diterima di luar aplikasi. Tidak ada biaya bulanan |
 | Kemitraan Dana Desa dan CSR | Rencana | Paket desa binaan |
 | Komisi penjualan 5% | **Rencana tahap lanjut** | **Belum ada di kode.** Saat ini dana online masuk penuh ke saldo posko dikurangi biaya yang diisi admin saat pencairan. Pembagian 95:5 belum dicatat |
 | Paket premium | Rencana | Kuota AI tambahan, laporan lanjutan, ekspor |
@@ -190,3 +192,4 @@ Semua target **belum diukur**.
 |---|---|---|
 | 1.0 | 25 Okt 2026 | Versi awal |
 | 2.0 | 9 Nov 2026 | Lingkup mencakup toko online dan dana online; BR-03 diperbaiki; BR-05 sampai BR-12; komisi 5% ditandai rencana; model AI; contoh unit economics sesuai aturan aplikasi; angka pasar ditandai belum bersumber; keputusan terbuka kategori produk |
+| 2.1 | 10 Nov 2026 | Biaya aktivasi Rp250.000 ditandai belum bersumber; temuan teks katalog yang menyebut jelantah dan sisa dapur (6.3) |

@@ -14,7 +14,7 @@ Akibatnya ada tiga masalah:
 2. **Dokumen saling bertentangan.** `7_project_lengkap_v1.0.md` menyebut marketplace bagian dari MVP, sedangkan PRD/SRS/FRD/PMP menyebutnya di luar lingkup. Berkas proposal Markdown dan `9_concept_draft_v1.0.md` memuat prinsip lama yang dibatalkan (AI menaksir harga, olahan makanan, langganan bulanan).
 3. **Ada klaim yang tidak ada di kode** (bagian 3). Beberapa juga masuk ke proposal PDF dan pitch deck.
 
-Versi 2.0 dokumen (berkas di folder `v2.0/`) dibuat dari kode. Setiap fungsi diberi status *Terimplementasi*, *Sebagian*, atau *Rencana*, dan klaim yang belum bisa dibuktikan diberi label *belum diverifikasi*.
+Versi 2.0 dokumen (kini versi 2.1, berkas di folder `docs/`) dibuat dari kode. Setiap fungsi diberi status *Terimplementasi*, *Sebagian*, atau *Rencana*, dan klaim yang belum bisa dibuktikan diberi label *belum diverifikasi*.
 
 ## 2. Penilaian per dokumen
 
@@ -112,13 +112,13 @@ Prinsip berikut sesuai antara dokumen dan kode (diverifikasi): AI hanya mengenal
 
 | Dokumen v2 | Perubahan |
 |---|---|
-| `0_BRD_v2.0.md` | Lingkup disesuaikan; model Gemini; aturan bisnis BR-03 diperbaiki, BR-05 sampai BR-11 ditambah; contoh unit economics memakai aturan aplikasi; komisi 5% ditandai rencana |
-| `1_PRD_v2.0.md` | Ruang lingkup tiga tingkat (ada, sebagian, rencana); persona pembeli; metrik ditandai belum diukur |
-| `2_SRS_v2.0.md` | Arsitektur sesuai kode; 18 tabel dan entitas pesanan; NFR diberi status verifikasi; kebutuhan antarmuka Midtrans, Fonnte, Biteship |
-| `3_FRD_v2.0.md` | FR01 sampai FR37 diberi status dan dikoreksi; FR38 sampai FR58 baru untuk marketplace |
-| `4_PMP_v2.0.md`, `5_WBS_v2.0.md` | Menjadi rencana dan realisasi (25 Oktober sampai 1 November) dengan status per butir |
-| `6_SDD_v2.0.md` | **Baru**: arsitektur, model data, katalog fungsi, keamanan, alur, keputusan desain, utang teknis |
-| `7_project_lengkap_v2.0.md`, `8_flow_cara_kerja_v2.0.md` | Disesuaikan; contoh hitungan memakai aturan aplikasi |
+| `0_BRD_v2.1.md` | Lingkup disesuaikan; model Gemini; aturan bisnis BR-03 diperbaiki, BR-05 sampai BR-11 ditambah; contoh unit economics memakai aturan aplikasi; komisi 5% ditandai rencana |
+| `1_PRD_v2.1.md` | Ruang lingkup tiga tingkat (ada, sebagian, rencana); persona pembeli; metrik ditandai belum diukur |
+| `2_SRS_v2.1.md` | Arsitektur sesuai kode; 18 tabel dan entitas pesanan; NFR diberi status verifikasi; kebutuhan antarmuka Midtrans, Fonnte, Biteship |
+| `3_FRD_v2.1.md` | FR01 sampai FR37 diberi status dan dikoreksi; FR38 sampai FR58 baru untuk marketplace |
+| `4_PMP_v2.1.md`, `5_WBS_v2.1.md` | Menjadi rencana dan realisasi (25 Oktober sampai 1 November) dengan status per butir |
+| `6_SDD_v2.1.md` | **Baru**: arsitektur, model data, katalog fungsi, keamanan, alur, keputusan desain, utang teknis |
+| `7_project_lengkap_v2.1.md`, `8_flow_cara_kerja_v2.1.md` | Disesuaikan; contoh hitungan memakai aturan aplikasi |
 
 Dokumen **tidak diubah** dan hanya disimpan sebagai arsip: `9_concept_draft_v1.0.md` dan `9_proposal_lengkap_v1.0.md` (digantikan proposal PDF).
 

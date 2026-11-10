@@ -1,9 +1,9 @@
 # SDD: Software Design Document
 
 Produk: KriyaPKK
-Versi: 1.0 (dokumen baru; sebelumnya tidak ada dokumen desain)
+Versi: 1.1 (dokumen baru di rangkaian 2.x; diverifikasi ulang 10 November 2026)
 Dasar: kode commit `aa876a4` (1 November 2026), cabang `main`
-Dokumen terkait: SRS 2.0 (kebutuhan), FRD 2.0 (fungsi), PRD 2.0, BRD 2.0
+Dokumen terkait: SRS 2.1 (kebutuhan), FRD 2.1 (fungsi), PRD 2.1, BRD 2.1
 
 Dokumen ini menjelaskan **bagaimana** sistem dibangun. Disusun dari pembacaan kode, bukan dari rencana. Bagian yang tidak dapat diaudit karena berkas hilang diberi tanda **[0002 hilang]**.
 
@@ -158,6 +158,7 @@ Awalan `_` = internal. "Server" = hanya `service_role`.
 | Pesanan | `create_order`, `mark_order_paid` (server); `set_order_status`, `posko_pesanan_saya` (login); `attach_payment`, `close_order`, `set_midtrans_status`, `expire_stale_orders`, `expire_my_stale_orders` **[0002 hilang]** | sesuai peran |
 | Dana | `my_platform_balance` (pengurus), `_saldo_platform` (internal) | sesuai peran |
 | Internal | `_require_member`, `_require_pengurus`, `_require_admin`, `_idea_costs`, `_approve_deposit`, `_start_batch`, `_finish_batch`, `_pay_wages`, `_record_sale`, `_expire_stale_orders` | fungsi lain |
+| Data demo | `demo_seed(uuid)` (0001; tanpa izin eksekusi untuk klien, dipanggil manual lewat SQL) | admin basis data |
 | Pemicu | `handle_new_user` (pendaftaran: kelompok baru, akun pembeli, atau anggota), `seed_default_prices` (7 harga awal) | otomatis |
 
 ## 6. Alur desain utama
@@ -250,7 +251,7 @@ Pengurus memproses pesanan: `set_order_status` (resi wajib saat dikirim). Admin 
 ### 7.4 Pembayaran dan rahasia
 - Webhook: SHA512 dari `order_id + status_code + gross_amount + ServerKey`, dibandingkan secara konstan; status dicek ulang ke API Core; nominal wajib sama; notifikasi ganda idempoten.
 - Kunci `GEMINI_API_KEY`, `SUPABASE_SECRET_KEY`, `MIDTRANS_SERVER_KEY`, `FONNTE_API_TOKEN`, `CRON_SECRET` hanya di server.
-- `/api/keepalive` dan `/api/diagnosa` di produksi dilindungi `CRON_SECRET`.
+- `/api/keepalive` dilindungi header `Authorization: Bearer <CRON_SECRET>`. `/api/diagnosa` aktif saat pengembangan, atau di produksi lewat `?kunci=<CRON_SECRET>`.
 
 ### 7.5 Celah dan risiko yang diketahui
 
@@ -258,7 +259,7 @@ Pengurus memproses pesanan: `set_order_status` (resi wajib saat dikirim). Admin 
 |---|---|
 | Tanpa pembatasan laju dan captcha | Endpoint publik (`/api/ongkir`, pendaftaran) dapat disalahgunakan; rate limit di migrasi dibatalkan tidak berlaku |
 | Tanpa header keamanan | `next.config.ts` kosong (tanpa CSP) |
-| Kata sandi akun demo ada di README | Aman selama repositori privat |
+| Kata sandi akun demo ada di README | **Repositori GitHub ini publik** (diperiksa 10 November 2026), sehingga kata sandi terlihat siapa pun. Ganti setelah masa penjurian atau pindahkan dari README |
 | Tabel pesanan tidak dapat diaudit | Migrasi `0002` hilang |
 | Simulasi pembayaran | Harus dimatikan sebelum produksi (`SIMULASI_PEMBAYARAN`) |
 
@@ -270,9 +271,10 @@ Pengurus memproses pesanan: `set_order_status` (resi wajib saat dikirim). Admin 
 | `SUPABASE_SECRET_KEY` | Ya | Server saja |
 | `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_MODEL_FALLBACK` | Ya | AI (bawaan model `gemini-3.5-flash-lite`) |
 | `CRON_SECRET` | Ya | Cron dan diagnosa |
-| `NEXT_PUBLIC_APP_URL` | Ya | Alamat aplikasi untuk tautan dan callback |
-| `ONGKIR_MODE` | Ya | `manual` atau `biteship` |
-| `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY`, `MIDTRANS_SERVER_KEY`, `NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION` | Ya | Pembayaran |
+| `NEXT_PUBLIC_APP_URL` | Disarankan | Alamat aplikasi untuk tautan dan callback; bila kosong memakai alamat dari permintaan, lalu `http://localhost:3000` |
+| `ONGKIR_MODE` | Tidak | `biteship` mengaktifkan Biteship; selain itu `manual` (bawaan) |
+| `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY`, `MIDTRANS_SERVER_KEY` | Ya | Pembayaran |
+| `MIDTRANS_IS_PRODUCTION` atau `NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION` | Tidak | `true` hanya untuk kunci produksi; kosong atau `false` = sandbox. Yang tanpa awalan dibaca lebih dulu, dan dibaca saat berjalan |
 | `SIMULASI_PEMBAYARAN` | Tidak | Uji sandbox |
 | `FONNTE_API_TOKEN` | Tidak | WhatsApp |
 | `ADMIN_EMAIL` | Tidak | Kontak di halaman privasi |
@@ -317,3 +319,4 @@ Fungsi database melempar kode (mis. `STOK_KURANG`, `KUOTA_HABIS`, `NOMINAL_TIDAK
 | Versi | Tanggal | Perubahan |
 |---|---|---|
 | 1.0 | 9 Nov 2026 | Dokumen baru dari pembacaan kode commit `aa876a4` |
+| 1.1 | 10 Nov 2026 | Repositori publik (7.5); variabel lingkungan dikoreksi (8); `demo_seed` ditambah (5); akses diagnosa (7.4) |

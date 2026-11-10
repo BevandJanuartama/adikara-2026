@@ -1,7 +1,7 @@
 # SRS: Software Requirements Specification
 
 Produk: KriyaPKK
-Versi: 2.0 (diselaraskan dengan kode commit `aa876a4`, 1 November 2026)
+Versi: 2.1 (diselaraskan dengan kode commit `aa876a4`, 1 November 2026, dan aplikasi live; diverifikasi 10 November 2026)
 Menggantikan: SRS 1.0 (25 Oktober 2026, "tanpa marketplace")
 
 ## 1. Pendahuluan
@@ -23,7 +23,7 @@ Menggantikan: SRS 1.0 (25 Oktober 2026, "tanpa marketplace")
 | RPC | Fungsi database yang dipanggil dari aplikasi |
 | Pesanan lunas | Pesanan yang pembayarannya sudah diverifikasi (`paid_at` terisi) |
 
-1.4 Dokumen terkait: BRD, PRD, FRD, SDD (`6_SDD_v2.0.md`), PMP, WBS. Arsitektur rinci ada di SDD.
+1.4 Dokumen terkait: BRD, PRD, FRD, SDD (`6_SDD_v2.1.md`), PMP, WBS. Arsitektur rinci ada di SDD.
 
 ## 2. Deskripsi umum
 
@@ -223,3 +223,4 @@ Contoh (template "Pouch kosmetik kain perca": 0,25 kg kain perca, ritsleting Rp2
 |---|---|---|
 | 1.0 | 25 Okt 2026 | Versi awal |
 | 2.0 | 9 Nov 2026 | Lingkup mencakup marketplace; OpenRouter diganti model cadangan Gemini; entitas data sesuai skema; NFR diberi status verifikasi; NFR20 sampai NFR22; bagian pengujian; contoh hitungan sesuai aturan aplikasi |
+| 2.1 | 10 Nov 2026 | Diverifikasi ulang terhadap kode dan web live; tidak ada perubahan kebutuhan |
