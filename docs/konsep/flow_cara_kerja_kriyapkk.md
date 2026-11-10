@@ -330,10 +330,8 @@ Jika waktu demo sangat terbatas saat babak final lomba, bawakan alur 4 langkah c
 
 ---
 
-## 8. Ringkasan File Terkait di Direktori `kriyapkk/`
+## 8. Dokumen Terkait
 
-Seluruh ekosistem berkas untuk proyek KriyaPKK kini tertata rapi dalam satu folder:
-
-* 📄 **[flow_cara_kerja_kriyapkk.md](file:///d:/Lomba/adikara/kriyapkk/flow_cara_kerja_kriyapkk.md)** *(Berkas ini: Rincian alur kerja, interaksi aktor, diagram, dan simulasi kasus).*
-* 📄 **[KRIYAPKK_PROPOSAL_LENGKAP_ADIKARA_2026.md](file:///d:/Lomba/adikara/kriyapkk/KRIYAPKK_PROPOSAL_LENGKAP_ADIKARA_2026.md)** *(Proposal lengkap, analisis AS-IS & TO-BE, skema database SQL, JSON API schema, model bisnis, dan rubrik ADIKARA).*
-* 📄 **[concept_draft.md](file:///d:/Lomba/adikara/kriyapkk/concept_draft.md)** *(Draft ide awal dari pengguna).*
+* [project_lengkap.md](project_lengkap.md): arsitektur menyeluruh dan solusi.
+* [concept_draft.md](concept_draft.md): draft ide awal.
+* [Spesifikasi software](../spesifikasi/): BRD, PRD, SRS, FRD, PMP, WBS.
