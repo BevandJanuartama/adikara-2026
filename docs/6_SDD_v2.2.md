@@ -1,9 +1,9 @@
 # SDD: Software Design Document
 
 Produk: KriyaPKK
-Versi: 1.1 (dokumen baru di rangkaian 2.x; diverifikasi ulang 10 November 2026)
+Versi: 1.2 (dokumen baru di rangkaian 2.x; diverifikasi dua putaran pada 10 November 2026)
 Dasar: kode commit `aa876a4` (1 November 2026), cabang `main`
-Dokumen terkait: SRS 2.1 (kebutuhan), FRD 2.1 (fungsi), PRD 2.1, BRD 2.1
+Dokumen terkait: SRS 2.2 (kebutuhan), FRD 2.2 (fungsi), PRD 2.2, BRD 2.2
 
 Dokumen ini menjelaskan **bagaimana** sistem dibangun. Disusun dari pembacaan kode, bukan dari rencana. Bagian yang tidak dapat diaudit karena berkas hilang diberi tanda **[0002 hilang]**.
 
@@ -26,7 +26,7 @@ Peramban (PWA)
          +-- Auth (email + kata sandi; admin, pengurus, anggota, pembeli)
          +-- Postgres + RLS per kelompok dan per pembeli
          |     +-- RPC atomik: setoran, produksi, upah, penjualan, pesanan, pencairan
-         +-- Storage: photos (privat), produk (publik)
+         +-- Storage: photos (privat), produk (publik; tidak ada di migrasi)
 ```
 
 ```mermaid
@@ -135,9 +135,16 @@ erDiagram
 ### 4.3 Status
 
 - Setoran: `draft` ke `approved` atau `cancelled`.
-- Batch: `running` ke `done` atau `cancelled` (bahan dikembalikan).
+- Batch: `running` ke `done` atau `cancelled` (bahan dikembalikan ke stok; kas bahan tambahan dan upah tidak otomatis dibalik).
 - Pesanan: `menunggu_bayar` ke `dibayar` ke `diproses` ke `dikirim` (resi wajib) atau `siap_diambil` ke `selesai`; cabang `batal`, `kedaluwarsa`, `gagal`.
 - Kelompok: `pending` ke `active` atau `inactive`.
+
+### 4.4 Storage
+
+| Bucket | Akses | Sumber |
+|---|---|---|
+| `photos` | Privat; batas 1 MB; JPEG, PNG, WebP; jalur `<id_kelompok>/...`; baca dan unggah hanya oleh anggota kelompok itu | Migrasi `0001` bagian 7 |
+| `produk` | Publik (foto katalog, jalur `<id_kelompok>/<nama>.jpg`) | **[0002 hilang]**: kode memakainya (`lib/marketplace/foto.ts`), tetapi pembuatan bucket dan kebijakannya tidak ada di migrasi yang tersedia |
 
 ## 5. Katalog fungsi database (RPC)
 
@@ -235,7 +242,7 @@ Pengurus memproses pesanan: `set_order_status` (resi wajib saat dikirim). Admin 
 
 ### 7.2 Hak akses basis data
 - `revoke all` pada tabel untuk `anon` dan `authenticated`; `select` dibuka lalu dibatasi RLS; tulis hanya pada kolom tertentu lewat `grant update (kolom)`.
-- Eksekusi fungsi dicabut untuk semua, lalu dibuka per fungsi. Fungsi pesanan hanya untuk `service_role`.
+- Eksekusi fungsi dicabut untuk semua, lalu dibuka per fungsi. `create_order` dan `mark_order_paid` hanya untuk `service_role` (dipanggil server setelah harga dan nominal diverifikasi). `set_order_status`, `posko_pesanan_saya`, `my_platform_balance`, dan fungsi `admin_*` dibuka untuk pengguna masuk, lalu peran diperiksa di dalam fungsi.
 
 ### 7.3 Matriks akses data
 
@@ -320,3 +327,4 @@ Fungsi database melempar kode (mis. `STOK_KURANG`, `KUOTA_HABIS`, `NOMINAL_TIDAK
 |---|---|---|
 | 1.0 | 9 Nov 2026 | Dokumen baru dari pembacaan kode commit `aa876a4` |
 | 1.1 | 10 Nov 2026 | Repositori publik (7.5); variabel lingkungan dikoreksi (8); `demo_seed` ditambah (5); akses diagnosa (7.4) |
+| 1.2 | 10 Nov 2026 | Bagian 4.4 Storage; 7.2 hibah eksekusi fungsi; 4.3 status batch; diagram storage |

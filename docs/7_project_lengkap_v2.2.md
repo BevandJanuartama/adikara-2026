@@ -1,8 +1,8 @@
 # KriyaPKK: Konsep dan Arsitektur Ringkas
 
-Versi: 2.1 (diselaraskan dengan kode commit `aa876a4`, 1 November 2026, dan aplikasi live; diverifikasi 10 November 2026)
+Versi: 2.2 (diselaraskan dengan kode commit `aa876a4`, 1 November 2026, dan aplikasi live; diverifikasi dua putaran pada 10 November 2026)
 Menggantikan versi awal 25 Oktober 2026 (tersedia di riwayat git).
-Untuk desain rinci lihat `6_SDD_v2.1.md`.
+Untuk desain rinci lihat `6_SDD_v2.2.md`.
 
 Ekosistem digital pengelolaan sampah anorganik dan ekonomi kreatif kampung berbasis AI. Sistem kasir dan ERP mini untuk kelompok PKK, dengan toko online. Mitra membayar aktivasi sekali, tanpa biaya bulanan.
 
@@ -162,7 +162,7 @@ Rencana awal 4 hari. Realisasi 25 Oktober sampai 1 November 2026 (lihat PMP 2.0)
 ## 16. Validasi dan bahan pitch
 
 1. Uji scan AI pada 20 sampai 30 foto nyata (**belum dilakukan**).
-2. Contoh satu produk dari awal sampai akhir (lihat contoh di `8_flow_cara_kerja_v2.1.md` bagian 5).
+2. Contoh satu produk dari awal sampai akhir (lihat contoh di `8_flow_cara_kerja_v2.2.md` bagian 5).
 3. Simulasi dampak satu PKK selama satu bulan.
 4. Wawancara satu atau dua pengurus PKK atau bank sampah.
 5. Perbandingan dengan aplikasi bank sampah yang ada.
@@ -175,3 +175,4 @@ Rencana awal 4 hari. Realisasi 25 Oktober sampai 1 November 2026 (lihat PMP 2.0)
 | 1.0 | 25 Okt 2026 | Versi awal |
 | 2.0 | 9 Nov 2026 | Bagian 7 dan 8 sesuai kode (tanpa 95:5, tanpa zona, tanpa Nominatim); OpenRouter dihapus; Next.js 16; status per fitur; realisasi jadwal; risiko baru |
 | 2.1 | 10 Nov 2026 | Biaya aktivasi ditandai belum bersumber |
+| 2.2 | 10 Nov 2026 | Diverifikasi putaran kedua; tidak ada perubahan isi |

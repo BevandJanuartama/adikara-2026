@@ -1,8 +1,8 @@
 # Verifikasi Dokumentasi terhadap Aplikasi dan Web Live
 
-Tanggal: 10 November 2026
+Tanggal: 10 November 2026 (putaran 1: versi 2.1; putaran 2: versi 2.2)
 Dasar: kode di `kriya-pkk/` (commit `aa876a4`) dan aplikasi live https://kriya-pkk.vercel.app
-Hasil: dokumentasi versi 2.0 dinaikkan menjadi **2.1** setelah koreksi di bawah.
+Hasil: dokumentasi 2.0 dinaikkan menjadi 2.1, lalu 2.2 setelah putaran kedua. Setelah putaran kedua tidak ada selisih isi yang tersisa di dokumen; yang tersisa hanya butir bagian 3.3 yang memang harus diperbaiki di kode atau repositori.
 
 ## 1. Cara memeriksa
 
@@ -51,7 +51,7 @@ Hasil: dokumentasi versi 2.0 dinaikkan menjadi **2.1** setelah koreksi di bawah.
 | 6 | BRD, PRD, konsep | Biaya aktivasi Rp250.000 tampil seperti fakta | Ditandai angka tim, belum bersumber, tidak ada di aplikasi |
 | 7 | BRD 6.3 | Tidak menyebut teks katalog | Teks katalog live menyebut "minyak jelantah, sisa dapur", bertentangan dengan batas anorganik |
 | 8 | PMP 4 | Nama tiga anggota seolah terverifikasi | Ditandai berasal dari tim, tidak ada di repositori |
-| 9 | README aplikasi | Merujuk `docs/ALUR-KRIYAPKK.md` yang tidak ada | Menaut ke `docs/8_flow_cara_kerja_v2.1.md` |
+| 9 | README aplikasi | Merujuk `docs/ALUR-KRIYAPKK.md` yang tidak ada | Menaut ke `docs/8_flow_cara_kerja_v2.2.md` |
 | 10 | Seluruh dokumen | Versi 2.0 | Versi 2.1 dengan baris riwayat revisi |
 
 ### 3.3 Selisih yang belum dapat dikoreksi di dokumen
@@ -64,6 +64,23 @@ Perbaikannya ada di kode atau repositori, bukan di dokumen. Dokumen sudah mencat
 4. Uji akurasi scan AI dan uji kegunaan belum ada.
 5. Kata sandi akun demo masih tertulis di README aplikasi yang publik.
 
+### 3.4 Putaran kedua (versi 2.2)
+
+Cakupan tambahan: badan seluruh fungsi database di migrasi `0001`, `0003`, dan `0004_akun_pembeli` (setoran, stok, ide, produksi, upah, penjualan, kas, laporan, kuota AI, admin, pesanan, pencairan), seluruh kebijakan RLS dan hibah eksekusi, kebijakan Storage, kode galat, validasi form di sisi aplikasi, rute pembayaran, dan konsistensi angka antar dokumen.
+
+Hasil: seluruh aturan FR01 sampai FR58, matriks akses SDD 7.3, rumus lampiran SRS, dan contoh hitungan sesuai. Selisih yang ditemukan dan sudah dikoreksi:
+
+| No | Dokumen | Sebelumnya | Sesudahnya |
+|---|---|---|---|
+| 11 | FRD FR16 dan FR24, SDD 4.3, alur kerja | Pembatalan batch hanya disebut mengembalikan bahan | `cancel_batch` tidak membalik kas bahan tambahan atau upah; dicatat dan diarahkan ke entri pembalik |
+| 12 | SDD 7.2 | "Fungsi pesanan hanya untuk `service_role`" | Hanya `create_order` dan `mark_order_paid`; fungsi pesanan lain terbuka untuk pengguna masuk dengan pemeriksaan peran di dalam fungsi |
+| 13 | SDD, SRS, FRD FR40 | Bucket `produk` ditulis ada | Pembuatan bucket dan kebijakannya tidak ada di migrasi (bagian dari migrasi `0002` yang hilang); bagian 4.4 SDD ditambah |
+| 14 | FRD FR48 | Mandiri disebut sebagai VA | Mandiri lewat Bill Payment (`echannel`) |
+| 15 | FRD FR08 | "Maksimal 12 kata" tampak seperti aturan keras | Itu permintaan di prompt; batas teknis 200 karakter |
+| 16 | BRD 8.2 | "Vercel (paket hobi)" | Nama paket tidak tercatat di repositori; ditulis paket gratis |
+| 17 | SRS 4.3 | Endpoint notifikasi hanya POST | Ada `GET` yang hanya mengembalikan info |
+| 18 | Laporan analisis | "18 tabel" bertentangan dengan 17 di bagian lain; tidak ditandai historis | Diperbaiki menjadi 17 ditambah `orders` dan `order_items`; diberi catatan laporan historis |
+
 ## 4. Kesimpulan
 
-Isi dokumentasi 2.0 sudah selaras dengan kode dan halaman publik web live. Selisih yang tersisa adalah catatan kecil (di atas) dan butir yang memang harus diperbaiki di kode. Halaman setelah login belum diuji langsung.
+Isi dokumentasi 2.2 selaras dengan kode, migrasi yang tersedia, dan halaman publik web live. Batasnya: halaman setelah login, checkout, pembayaran, WhatsApp, dan basis data yang berjalan tidak diuji langsung, dan bagian skema yang berasal dari migrasi `0002` hanya dapat dirunut dari kode pemanggil.

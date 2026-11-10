@@ -1,7 +1,7 @@
 # BRD: Business Requirements Document
 
 **Nama proyek:** KriyaPKK
-**Versi:** 2.1 (diselaraskan dengan kode commit `aa876a4`, 1 November 2026, dan aplikasi live; diverifikasi 10 November 2026)
+**Versi:** 2.2 (diselaraskan dengan kode commit `aa876a4`, 1 November 2026, dan aplikasi live; diverifikasi dua putaran pada 10 November 2026)
 **Menggantikan:** BRD 1.0 (25 Oktober 2026)
 **Konteks:** ADIKARA 2026, Divisi Inovasi Software dan Entrepreneurship
 **Institusi:** Fakultas Informatika, Universitas Telkom
@@ -137,7 +137,7 @@ Katalog saat ini menerima kategori **kuliner** dan **pupuk**. Bila produk pangan
 | Paket premium | Rencana | Kuota AI tambahan, laporan lanjutan, ekspor |
 
 ### 8.2 Struktur biaya
-- Hosting: Vercel (paket hobi) dan Supabase (paket gratis) pada tahap lomba.
+- Hosting: Vercel dan Supabase memakai paket gratis pada tahap lomba (nama paket Vercel tidak tercatat di repositori).
 - AI: Google Gemini; model diatur lewat env (bawaan `gemini-3.5-flash-lite`, dengan model cadangan Gemini). Penghematan: kompresi foto 768 px, cache hasil di database, kuota harian, keluaran JSON berskema. (Ini **cache respons di database**, bukan prompt caching milik penyedia.)
 - Pembayaran: Midtrans sandbox. Pada produksi ada biaya per transaksi QRIS dan virtual account; biaya itu dapat dibebankan ke posko lewat kolom biaya saat pencairan.
 - WhatsApp: Fonnte (opsional); biaya mengikuti paket Fonnte (belum dihitung).
@@ -193,3 +193,4 @@ Semua target **belum diukur**.
 | 1.0 | 25 Okt 2026 | Versi awal |
 | 2.0 | 9 Nov 2026 | Lingkup mencakup toko online dan dana online; BR-03 diperbaiki; BR-05 sampai BR-12; komisi 5% ditandai rencana; model AI; contoh unit economics sesuai aturan aplikasi; angka pasar ditandai belum bersumber; keputusan terbuka kategori produk |
 | 2.1 | 10 Nov 2026 | Biaya aktivasi Rp250.000 ditandai belum bersumber; temuan teks katalog yang menyebut jelantah dan sisa dapur (6.3) |
+| 2.2 | 10 Nov 2026 | Nama paket Vercel tidak lagi disebut (tidak tercatat di repositori) |

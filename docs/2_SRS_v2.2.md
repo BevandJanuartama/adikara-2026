@@ -1,7 +1,7 @@
 # SRS: Software Requirements Specification
 
 Produk: KriyaPKK
-Versi: 2.1 (diselaraskan dengan kode commit `aa876a4`, 1 November 2026, dan aplikasi live; diverifikasi 10 November 2026)
+Versi: 2.2 (diselaraskan dengan kode commit `aa876a4`, 1 November 2026, dan aplikasi live; diverifikasi dua putaran pada 10 November 2026)
 Menggantikan: SRS 1.0 (25 Oktober 2026, "tanpa marketplace")
 
 ## 1. Pendahuluan
@@ -23,7 +23,7 @@ Menggantikan: SRS 1.0 (25 Oktober 2026, "tanpa marketplace")
 | RPC | Fungsi database yang dipanggil dari aplikasi |
 | Pesanan lunas | Pesanan yang pembayarannya sudah diverifikasi (`paid_at` terisi) |
 
-1.4 Dokumen terkait: BRD, PRD, FRD, SDD (`6_SDD_v2.1.md`), PMP, WBS. Arsitektur rinci ada di SDD.
+1.4 Dokumen terkait: BRD, PRD, FRD, SDD (`6_SDD_v2.2.md`), PMP, WBS. Arsitektur rinci ada di SDD.
 
 ## 2. Deskripsi umum
 
@@ -61,7 +61,7 @@ Menggantikan: SRS 1.0 (25 Oktober 2026, "tanpa marketplace")
 | Server | Server Components, Server Actions, 11 Route Handlers di Vercel; `proxy.ts` menyegarkan sesi Supabase dan melindungi halaman |
 | Logika bisnis | Fungsi Postgres `security definer` (RPC). Uang, stok, kas, dan pesanan hanya berubah lewat fungsi ini |
 | AI | Google Gemini (`@google/genai`) dengan keluaran JSON berskema (Zod), batas token, timeout, cache, dan kuota. Model utama dan model cadangan (Gemini) diatur lewat env |
-| Data | Supabase Postgres dengan RLS, Auth (email dan kata sandi), Storage (bucket `photos` privat, `produk` publik) |
+| Data | Supabase Postgres dengan RLS, Auth (email dan kata sandi), Storage (bucket `photos` privat; bucket `produk` publik dipakai kode tetapi pembuatannya tidak ada di migrasi) |
 | Eksternal | Midtrans Snap, Fonnte (WhatsApp), Biteship (opsional), OpenStreetMap (iframe peta) |
 | Penjadwal | Vercel Cron: `/api/keepalive` setiap hari 01.00 UTC |
 
@@ -81,7 +81,7 @@ Rincian dan diagram: SDD.
 |---|---|---|
 | Gemini API | Analisis gambar dan teks JSON | Kunci hanya di server. Jenis fungsi: scan, ide, panduan |
 | Supabase | Auth, Postgres, Storage | Kunci rahasia hanya di server |
-| Midtrans Snap | QRIS dan virtual account; batas bayar 60 menit | Webhook `POST /api/midtrans/notifikasi` bertanda tangan SHA512; status dicek ulang ke API Core |
+| Midtrans Snap | QRIS dan virtual account; batas bayar 60 menit | Webhook `POST /api/midtrans/notifikasi` bertanda tangan SHA512; status dicek ulang ke API Core. `GET` pada alamat yang sama hanya mengembalikan info |
 | Fonnte | Satu WhatsApp ke posko saat pesanan lunas | Opsional; gagal kirim tidak menggagalkan pesanan |
 | Biteship | Tarif ongkir | Opsional (`ONGKIR_MODE=biteship`); bawaan tarif manual |
 | OpenStreetMap | Peta tampilan (iframe) dan tautan Google Maps | Tanpa kunci API; tidak memakai Leaflet atau Nominatim |
@@ -224,3 +224,4 @@ Contoh (template "Pouch kosmetik kain perca": 0,25 kg kain perca, ritsleting Rp2
 | 1.0 | 25 Okt 2026 | Versi awal |
 | 2.0 | 9 Nov 2026 | Lingkup mencakup marketplace; OpenRouter diganti model cadangan Gemini; entitas data sesuai skema; NFR diberi status verifikasi; NFR20 sampai NFR22; bagian pengujian; contoh hitungan sesuai aturan aplikasi |
 | 2.1 | 10 Nov 2026 | Diverifikasi ulang terhadap kode dan web live; tidak ada perubahan kebutuhan |
+| 2.2 | 10 Nov 2026 | Bucket `produk` ditandai tidak ada di migrasi; endpoint notifikasi punya GET info |

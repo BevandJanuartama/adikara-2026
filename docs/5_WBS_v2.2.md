@@ -162,3 +162,4 @@ Status: **Selesai**, **Sebagian**, **Belum**, **Tidak dikerjakan** (diganti kepu
 | 1.0 | 25 Okt 2026 | Rencana awal |
 | 2.0 | 9 Nov 2026 | Status per butir; bagian 14.0 toko online; butir 10.4 dan 12.6; prioritas berikutnya |
 | 2.1 | 10 Nov 2026 | Tidak ada perubahan status; diverifikasi ulang |
+| 2.2 | 10 Nov 2026 | Diverifikasi putaran kedua; tidak ada perubahan isi |

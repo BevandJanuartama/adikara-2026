@@ -1,7 +1,7 @@
 # FRD: Functional Requirements Document
 
 Produk: KriyaPKK
-Versi: 2.1 (diselaraskan dengan kode commit `aa876a4`, 1 November 2026, dan aplikasi live; diverifikasi 10 November 2026)
+Versi: 2.2 (diselaraskan dengan kode commit `aa876a4`, 1 November 2026, dan aplikasi live; diverifikasi dua putaran pada 10 November 2026)
 Menggantikan: FRD 1.0 (25 Oktober 2026, "tanpa marketplace")
 
 ## Cara membaca
@@ -39,7 +39,7 @@ Nomor FR01 sampai FR37 dipertahankan dari versi 1.0 agar keterlacakan tidak putu
 | ID | Fungsi | Aktor | Status | Perilaku sebenarnya |
 |---|---|---|---|---|
 | FR07 | Unggah foto | PGR | Ada | Kamera atau galeri. Dikompres di peramban (sisi terpanjang 768 px, JPEG kualitas 70%). Batas keras 1 MB; format JPEG, PNG, WebP. Disimpan di bucket privat `photos` dengan jalur `<id_kelompok>/deposits/...` |
-| FR08 | Scan AI | PGR | Ada | Urutan: login, unduh foto, cek cache (hash foto), cek kuota, panggil Gemini, validasi Zod, simpan cache. Hasil per jenis: kondisi (bersih, kotor, rusak), kelayakan, alasan singkat (maksimal 12 kata). Maksimal 10 baris per foto. Jenis di luar tabel harga menjadi "Lainnya" dan tidak layak. Barang berbahaya ditandai tidak layak. AI tidak menaksir berat maupun harga. Cache hit tidak memakai kuota |
+| FR08 | Scan AI | PGR | Ada | Urutan: login, unduh foto, cek cache (hash foto), cek kuota, panggil Gemini, validasi Zod, simpan cache. Hasil per jenis: kondisi (bersih, kotor, rusak), kelayakan, alasan singkat (diminta maksimal 12 kata lewat prompt; batas teknis skema 200 karakter). Maksimal 10 baris per foto. Jenis di luar tabel harga menjadi "Lainnya" dan tidak layak. Barang berbahaya ditandai tidak layak. AI tidak menaksir berat maupun harga. Cache hit tidak memakai kuota |
 | FR09 | Koreksi manual | PGR | Ada | Pengurus dapat mengubah jenis, kondisi, dan kelayakan, atau memilih jenis tanpa AI. Bila AI gagal atau kuota habis, API membalas `manual: true` |
 | FR10 | Berat dan taksiran | PGR | Ada | Subtotal = berat kali harga per kg dari tabel harga (dibulatkan ke rupiah). Barang tidak layak = Rp0. Jenis layak tanpa harga ditolak (`HARGA_BELUM_DIATUR`). Perhitungan di database |
 | FR11 | Persetujuan warga | PGR | Ada | Setoran berstatus `draft`, lalu disetujui (pilih masuk saldo atau dibayar tunai) atau dibatalkan. Setoran yang sudah diproses tidak bisa diubah |
@@ -52,7 +52,7 @@ Nomor FR01 sampai FR37 dipertahankan dari versi 1.0 agar keterlacakan tidak putu
 | ID | Fungsi | Aktor | Status | Perilaku sebenarnya |
 |---|---|---|---|---|
 | FR15 | Daftar stok | PGR, ANG | Ada | Per jenis: kg dan nilai rata-rata per kg |
-| FR16 | Kurangi stok saat produksi | SIS | Ada | Stok dikunci per baris, berkurang saat batch dimulai. Batch ditolak bila kurang (`STOK_KURANG`). Pembatalan batch yang masih berjalan mengembalikan bahan |
+| FR16 | Kurangi stok saat produksi | SIS | Ada | Stok dikunci per baris, berkurang saat batch dimulai. Batch ditolak bila kurang (`STOK_KURANG`). Pembatalan batch yang masih berjalan mengembalikan bahan ke stok (nilai rata-rata dihitung ulang), tetapi **tidak** membalik kas bahan tambahan atau upah yang sudah dicatat; koreksi kas dilakukan lewat entri pembalik (FR29) |
 | FR17 | Peringatan stok | SIS | Belum | Prioritas C. Belum ada |
 
 ## Modul 5: Ide dan costing
@@ -121,7 +121,7 @@ Nomor FR01 sampai FR37 dipertahankan dari versi 1.0 agar keterlacakan tidak putu
 
 | ID | Fungsi | Aktor | Status | Perilaku sebenarnya |
 |---|---|---|---|---|
-| FR40 | Kelola produk | PGR | Ada | Nama (minimal 2 huruf), kategori (kuliner, kerajinan, pupuk, kebersihan), deskripsi, bahan limbah, berat gram (bawaan 250), ukuran kemasan P x L x T cm (maksimal 300, opsional), harga jual (lebih dari 0), modal per unit, stok, foto (bucket publik `produk`), tampil di katalog |
+| FR40 | Kelola produk | PGR | Ada | Nama (minimal 2 huruf), kategori (kuliner, kerajinan, pupuk, kebersihan), deskripsi, bahan limbah, berat gram (bawaan 250), ukuran kemasan P x L x T cm (maksimal 300, opsional), harga jual (lebih dari 0), modal per unit, stok, foto (bucket publik `produk`; pembuatan bucket tidak ada di migrasi yang tersedia), tampil di katalog |
 | FR41 | Katalog publik | PMB, umum | Ada | Tanpa login. Daftar produk dari posko aktif yang tokonya buka; filter posko dan kategori, pencarian, halaman detail |
 
 ## Modul 14: Akun pembeli dan keranjang (baru)
@@ -139,7 +139,7 @@ Nomor FR01 sampai FR37 dipertahankan dari versi 1.0 agar keterlacakan tidak putu
 | FR45 | Pilihan pengiriman | PMB | Ada | Ambil di posko (gratis) atau ekspedisi. Ekspedisi mensyaratkan posko punya titik lokasi, alamat minimal 10 huruf, dan titik tujuan |
 | FR46 | Ongkir | SIS | Ada | Batas 150 km garis lurus (Haversine). Mode `manual` (bawaan): jarak tagih = garis lurus x 1,3 dibulatkan ke atas; berat dikenakan = terbesar antara berat asli dan volumetrik (P x L x T / 6000), toleransi 0,3 kg, minimal 1 kg; tujuh layanan (JNE REG, YES, JTR; J&T EZ; SiCepat REG, GOKIL; Pos Kilat Khusus). Mode `biteship` memakai API Biteship. Dihitung ulang di server saat checkout |
 | FR47 | Buat pesanan | SIS | Ada | Wajib akun pembeli aktif. Dalam satu transaksi: stok disisihkan, harga dan total dihitung dari database. Kode `KPK-YYMMDD-XXXXXX` |
-| FR48 | Pembayaran Midtrans | PMB | Ada | Snap, QRIS dan virtual account (BCA, BNI, BRI, Permata, CIMB, Mandiri, lainnya). Batas bayar 60 menit. Total = produk + ongkir |
+| FR48 | Pembayaran Midtrans | PMB | Ada | Snap, QRIS dan virtual account (BCA, BNI, BRI, Permata, CIMB, Mandiri lewat Bill Payment `echannel`, dan VA bank lain). Batas bayar 60 menit. Total = produk + ongkir |
 | FR49 | Webhook dan sinkronisasi | SIS | Ada | Tanda tangan SHA512 diverifikasi; status dicek ulang ke API Midtrans. Nominal harus sama dengan tagihan. Notifikasi ganda tidak mencatat penjualan dua kali. Saat lunas: baris penjualan per item, kas masuk `penjualan` senilai produk (tanpa ongkir). Halaman pesanan menyinkronkan status bila webhook terlambat |
 | FR50 | Notifikasi WhatsApp | SIS | Ada | Satu pesan ke WhatsApp posko saat lunas (barang, pembeli, alamat, ekspedisi). Gagal kirim tidak menggagalkan pesanan. Perlu `FONNTE_API_TOKEN` |
 | FR51 | Pesanan kedaluwarsa | SIS | Ada | Pesanan menunggu bayar yang ditinggal ditutup dan stok kembali. Dijalankan saat pesanan baru dan oleh cron harian (batas 90 menit); Midtrans juga mengirim status `expire` pada menit ke-60 |
@@ -201,3 +201,4 @@ Komisi platform 5% otomatis dan pembagian dana 95:5; pencairan otomatis (Midtran
 | 1.0 | 25 Okt 2026 | Versi awal, tanpa marketplace |
 | 2.0 | 9 Nov 2026 | Status per fungsi; koreksi FR03, FR07, FR12, FR23, FR31, FR33, FR37; FR38 sampai FR58 ditambahkan; bagian rencana |
 | 2.1 | 10 Nov 2026 | FR01 (kolom wajib dan opsional di pendaftaran), FR58 (cakupan diagnosa dan cara akses) |
+| 2.2 | 10 Nov 2026 | FR08 (batas kata), FR16 dan FR24 (pembatalan batch dan kas), FR40 (bucket), FR48 (Mandiri echannel) |

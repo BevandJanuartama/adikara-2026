@@ -1,7 +1,7 @@
 # PRD: Product Requirements Document
 
 Produk: KriyaPKK
-Versi: 2.1 (diselaraskan dengan kode commit `aa876a4`, 1 November 2026, dan aplikasi live; diverifikasi 10 November 2026)
+Versi: 2.2 (diselaraskan dengan kode commit `aa876a4`, 1 November 2026, dan aplikasi live; diverifikasi dua putaran pada 10 November 2026)
 Menggantikan: PRD 1.0 (25 Oktober 2026, "tanpa marketplace")
 Konteks: ADIKARA 2026, Kompetisi Inovasi (Software) dan Entrepreneur Business Plan
 
@@ -165,3 +165,4 @@ Perhitungan wajib untuk pitch: biaya AI per mitra per bulan dan titik impas (BRD
 | 1.0 | 25 Okt 2026 | Versi awal, tanpa marketplace |
 | 2.0 | 9 Nov 2026 | Ruang lingkup tiga tingkat; persona pembeli; user story 10 sampai 15; komisi 5% dipindah ke rencana; metrik ditandai belum diukur |
 | 2.1 | 10 Nov 2026 | Biaya aktivasi ditandai belum bersumber; diverifikasi ulang terhadap web live |
+| 2.2 | 10 Nov 2026 | Diverifikasi putaran kedua; tidak ada perubahan isi |

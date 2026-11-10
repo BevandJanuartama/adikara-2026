@@ -1,5 +1,7 @@
 # Analisis Kesesuaian Dokumentasi dengan Perangkat Lunak KriyaPKK
 
+> **Laporan historis (9 November 2026)** tentang dokumen versi 1.0. Butir di bagian 3.1 sampai 3.3 sudah dikoreksi di dokumen versi 2.2. Yang masih terbuka hanya bagian 3.4 (repositori) dan keputusan di bagian 5. Hasil pemeriksaan terbaru ada di `9_VERIFIKASI_WEB_v2.2.md`.
+
 Tanggal analisis: 9 November 2026
 Objek: seluruh dokumen versi 1.0 (sudah dihapus dari repositori, ada di riwayat git: BRD, PRD, SRS, FRD, PMP, WBS, konsep, alur, proposal Markdown) dan README aplikasi.
 Pembanding (sumber kebenaran): repositori `BevandJanuartama/adikara-2026`, cabang `main`, commit `aa876a4` (1 November 2026). Kode tidak dijalankan; yang diperiksa adalah isi berkas, migrasi SQL, dan hasil uji yang tersimpan.
@@ -22,7 +24,7 @@ Versi 2.0 dokumen (kini versi 2.1, berkas di folder `docs/`) dibuat dari kode. S
 |---|---|---|
 | `0_BRD_v1.0.md` | Sebagian | Inti bisnis benar. Lingkup salah (marketplace dan logistik "out-of-scope"), model Gemini usang, contoh hitungan tidak cocok dengan aturan aplikasi, BR-03 menyebut upah "wajib minimal" padahal sistem tidak memaksa |
 | `1_PRD_v1.0.md` | Sebagian | Lima butir "tidak termasuk" ternyata sudah ada (marketplace, katalog, ongkir, WhatsApp, checkout). Persona warga dengan akses saldo tidak ada |
-| `2_SRS_v1.0.md` | Sebagian | Arsitektur menyebut OpenRouter (tidak ada). Entitas data 14 buah, kode punya 18 tabel ditambah tabel pesanan. Beberapa NFR tidak terbukti |
+| `2_SRS_v1.0.md` | Sebagian | Arsitektur menyebut OpenRouter (tidak ada). Entitas data 14 buah, kode punya 17 tabel di migrasi yang berlaku, ditambah `orders` dan `order_items` dari migrasi yang hilang. Beberapa NFR tidak terbukti |
 | `3_FRD_v1.0.md` | Sebagian | FR01 sampai FR37 umumnya benar, tetapi tujuh butir berbeda dari kode (FR03, FR07, FR12, FR23, FR31, FR33, FR37), satu belum ada (FR17), dan tidak ada FR untuk marketplace (21 fungsi baru) |
 | `4_PMP_v1.0.md` | Tidak | Jadwal 4 hari dan lingkup "tanpa marketplace" sudah tidak berlaku. Tidak ada realisasi |
 | `5_WBS_v1.0.md` | Tidak | Sama; butir 10.4 (OpenRouter), 5.3, 11.4, 11.5 tidak dikerjakan |
@@ -112,13 +114,13 @@ Prinsip berikut sesuai antara dokumen dan kode (diverifikasi): AI hanya mengenal
 
 | Dokumen v2 | Perubahan |
 |---|---|
-| `0_BRD_v2.1.md` | Lingkup disesuaikan; model Gemini; aturan bisnis BR-03 diperbaiki, BR-05 sampai BR-11 ditambah; contoh unit economics memakai aturan aplikasi; komisi 5% ditandai rencana |
-| `1_PRD_v2.1.md` | Ruang lingkup tiga tingkat (ada, sebagian, rencana); persona pembeli; metrik ditandai belum diukur |
-| `2_SRS_v2.1.md` | Arsitektur sesuai kode; 18 tabel dan entitas pesanan; NFR diberi status verifikasi; kebutuhan antarmuka Midtrans, Fonnte, Biteship |
-| `3_FRD_v2.1.md` | FR01 sampai FR37 diberi status dan dikoreksi; FR38 sampai FR58 baru untuk marketplace |
-| `4_PMP_v2.1.md`, `5_WBS_v2.1.md` | Menjadi rencana dan realisasi (25 Oktober sampai 1 November) dengan status per butir |
-| `6_SDD_v2.1.md` | **Baru**: arsitektur, model data, katalog fungsi, keamanan, alur, keputusan desain, utang teknis |
-| `7_project_lengkap_v2.1.md`, `8_flow_cara_kerja_v2.1.md` | Disesuaikan; contoh hitungan memakai aturan aplikasi |
+| `0_BRD_v2.2.md` | Lingkup disesuaikan; model Gemini; aturan bisnis BR-03 diperbaiki, BR-05 sampai BR-11 ditambah; contoh unit economics memakai aturan aplikasi; komisi 5% ditandai rencana |
+| `1_PRD_v2.2.md` | Ruang lingkup tiga tingkat (ada, sebagian, rencana); persona pembeli; metrik ditandai belum diukur |
+| `2_SRS_v2.2.md` | Arsitektur sesuai kode; 18 tabel dan entitas pesanan; NFR diberi status verifikasi; kebutuhan antarmuka Midtrans, Fonnte, Biteship |
+| `3_FRD_v2.2.md` | FR01 sampai FR37 diberi status dan dikoreksi; FR38 sampai FR58 baru untuk marketplace |
+| `4_PMP_v2.2.md`, `5_WBS_v2.2.md` | Menjadi rencana dan realisasi (25 Oktober sampai 1 November) dengan status per butir |
+| `6_SDD_v2.2.md` | **Baru**: arsitektur, model data, katalog fungsi, keamanan, alur, keputusan desain, utang teknis |
+| `7_project_lengkap_v2.2.md`, `8_flow_cara_kerja_v2.2.md` | Disesuaikan; contoh hitungan memakai aturan aplikasi |
 
 Dokumen **tidak diubah** dan hanya disimpan sebagai arsip: `9_concept_draft_v1.0.md` dan `9_proposal_lengkap_v1.0.md` (digantikan proposal PDF).
 

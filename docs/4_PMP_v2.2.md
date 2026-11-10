@@ -137,3 +137,4 @@ Tidak ada pengadaan berbayar. Akun layanan (Supabase, Vercel, Google AI Studio, 
 | 1.0 | 25 Okt 2026 | Rencana awal |
 | 2.0 | 9 Nov 2026 | Menjadi rencana dan realisasi; lingkup mencakup toko online; risiko dan perubahan baru; kriteria berstatus |
 | 2.1 | 10 Nov 2026 | Angka riwayat git diverifikasi; nama anggota ditandai belum terverifikasi dari repositori |
+| 2.2 | 10 Nov 2026 | Diverifikasi putaran kedua; tidak ada perubahan isi |

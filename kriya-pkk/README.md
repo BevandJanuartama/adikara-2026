@@ -81,7 +81,7 @@ Warga setor sampah → saldo/tunai → stok bahan → ide kerajinan → produksi
 → dana online dicairkan admin ke rekening posko → kas & laporan dampak
 ```
 
-Alur lengkap ada di [`../docs/8_flow_cara_kerja_v2.1.md`](../docs/8_flow_cara_kerja_v2.1.md).
+Alur lengkap ada di [`../docs/8_flow_cara_kerja_v2.2.md`](../docs/8_flow_cara_kerja_v2.2.md).
 
 ## Teknologi & arsitektur
 
