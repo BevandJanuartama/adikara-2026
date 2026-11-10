@@ -1,7 +1,7 @@
 # WBS: Work Breakdown Structure
 
 Proyek: KriyaPKK
-Versi: 2.0 (rencana awal ditambah status pekerjaan per 1 November 2026)
+Versi: 2.2 (rencana awal ditambah status pekerjaan per 1 November 2026; diverifikasi dua putaran pada 10 November 2026)
 Menggantikan: WBS 1.0 (25 Oktober 2026, "tanpa marketplace")
 
 Peran: LEAD (project lead dan backend), FE (frontend dan UX), AI (AI engineer), DOC (dokumentasi dan bisnis). Prioritas: M wajib, S sebaiknya, C tahap lanjut. Estimasi dalam jam kerja orang (rencana awal). Jam realisasi tidak dicatat.

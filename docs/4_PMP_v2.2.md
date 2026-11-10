@@ -1,7 +1,7 @@
 # PMP: Project Management Plan
 
 Proyek: KriyaPKK
-Versi: 2.0 (rencana awal ditambah realisasi sampai 1 November 2026)
+Versi: 2.2 (rencana awal ditambah realisasi sampai 1 November 2026; diverifikasi dua putaran pada 10 November 2026)
 Menggantikan: PMP 1.0 (25 Oktober 2026, "tanpa marketplace", 4 hari)
 
 Sumber realisasi: riwayat git repositori `adikara-2026` (14 commit, 25 Oktober sampai 1 November 2026). Jam kerja dan rapat tidak tercatat, sehingga tidak dilaporkan.
