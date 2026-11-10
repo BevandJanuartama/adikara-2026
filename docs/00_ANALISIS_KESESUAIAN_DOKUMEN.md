@@ -5,7 +5,7 @@ Diperbarui: 10 November 2026 (status tiap temuan disamakan dengan dokumentasi ve
 
 Laporan ini mencatat selisih antara dokumen awal (versi 1.0) dan perangkat lunak. Kolom **Status** di setiap tabel menunjukkan keadaan terbaru. Hasil pemeriksaan dokumen 2.2 terhadap kode dan web live ada di [9_VERIFIKASI_WEB_v2.2.md](9_VERIFIKASI_WEB_v2.2.md).
 
-Objek: dokumen versi 1.0 (BRD, PRD, SRS, FRD, PMP, WBS, konsep, alur kerja, proposal Markdown) dan README aplikasi. Dokumen itu sudah dihapus dari repositori dan hanya ada di riwayat git cabang `main`, yaitu di `kriyapkk/spesifikasi_software/` dan `kriyapkk/konsep_dan_alur/`. Proposal Markdown ada di `kriyapkk/KRIYAPKK_PROPOSAL_LENGKAP_ADIKARA_2026.md` (dihapus pada commit `8c4a535`). Penamaan `..._v1.0.md` di laporan ini hanyalah label.
+Objek: dokumen versi 1.0 (BRD, PRD, SRS, FRD, PMP, WBS, konsep, alur kerja, proposal Markdown) dan README aplikasi. Dokumen itu sudah dihapus dari repositori dan hanya ada di riwayat git cabang `main`, yaitu di `kriyapkk/spesifikasi_software/` dan `kriyapkk/konsep_dan_alur/`. Proposal Markdown ada di `kriyapkk/KRIYAPKK_PROPOSAL_LENGKAP_ADIKARA_2026.md` (dihapus pada commit `c0ed45b`). Penamaan `..._v1.0.md` di laporan ini hanyalah label.
 
 Pembanding (sumber kebenaran): repositori `BevandJanuartama/adikara-2026`, cabang `main`, commit `aa876a4` (1 November 2026). Kode tidak dijalankan; yang diperiksa adalah isi berkas, migrasi SQL, dan hasil uji yang tersimpan.
 
@@ -163,3 +163,4 @@ Dokumen yang tidak dilanjutkan: konsep awal (`9_concept_draft_v1.0.md`) dan prop
 |---|---|
 | 9 Nov 2026 | Laporan awal terhadap dokumen versi 1.0 |
 | 10 Nov 2026 | Status tiap temuan disamakan dengan dokumen 2.2; nomor baris bukti diperbaiki (T-02, T-04, T-05); klaim Leaflet di README dicabut; R-01 dan R-02 dilengkapi; A-17 dan butir keputusan 6 dan 7 ditambah; hasil pemeriksaan proposal ver10 dan ver11 dicatat |
+| 10 Nov 2026 (2) | Nomor commit penghapusan proposal disesuaikan (`c0ed45b`) setelah riwayat git ditulis ulang; commit `aa876a4` (acuan kode) tetap sama |
