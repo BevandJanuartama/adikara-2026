@@ -19,7 +19,7 @@ adikara-2026/
 
 ## Dokumentasi
 
-Daftar lengkap ada di [docs/README.md](docs/README.md): BRD, PRD, SRS, FRD, PMP, WBS, SDD, konsep, alur kerja, dan laporan kesesuaian dokumen dengan kode.
+Daftar lengkap ada di [docs/README.md](docs/README.md): BRD, PRD, SRS, FRD, PMP, WBS, SDD, konsep, dan alur kerja.
 
 | Dokumen | Isi |
 |---|---|

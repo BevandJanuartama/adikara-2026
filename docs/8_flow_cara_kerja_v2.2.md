@@ -153,7 +153,6 @@ Untuk demo final 7 menit tambahkan: checkout pembeli (sandbox), tanda lunas dan 
 
 - `0_BRD_v2.2.md` sampai `6_SDD_v2.2.md`: BRD, PRD, SRS, FRD, PMP, WBS, SDD (versi 2.0).
 - `7_project_lengkap_v2.2.md`: konsep dan arsitektur ringkas.
-- `00_ANALISIS_KESESUAIAN_DOKUMEN.md`: daftar selisih dokumen lama dengan kode.
 - Dokumen versi 1.0 sudah dihapus dari repositori dan hanya ada di riwayat git.
 
 ## Riwayat revisi

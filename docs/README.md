@@ -14,4 +14,3 @@ Versi 2.2, diselaraskan dengan perangkat lunak di `kriya-pkk/` dan aplikasi live
 | [7_project_lengkap_v2.2.md](7_project_lengkap_v2.2.md) | Konsep dan arsitektur ringkas |
 | [8_flow_cara_kerja_v2.2.md](8_flow_cara_kerja_v2.2.md) | Alur kerja dan contoh hitungan |
 | [9_VERIFIKASI_WEB_v2.2.md](9_VERIFIKASI_WEB_v2.2.md) | Hasil pemeriksaan dua putaran dokumen terhadap kode dan web live (10 Nov 2026) |
-| [00_ANALISIS_KESESUAIAN_DOKUMEN.md](00_ANALISIS_KESESUAIAN_DOKUMEN.md) | Selisih dokumen lama terhadap kode, dan keputusan yang masih terbuka |
