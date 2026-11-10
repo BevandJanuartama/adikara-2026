@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Halaman yang boleh dibuka tanpa login
-const PUBLIC_PATHS = ["/", "/login", "/daftar", "/daftar/pembeli", "/privasi"];
+const PUBLIC_PATHS = ["/", "/login", "/daftar", "/daftar/pembeli", "/privasi", "/lupa-sandi", "/atur-sandi", "/auth/confirm"];
 // Toko online: katalog & keranjang bebas dibuka. Checkout dan /akun (pesanan saya) wajib login.
 const PUBLIC_PREFIXES = ["/katalog", "/keranjang", "/lacak"];
 

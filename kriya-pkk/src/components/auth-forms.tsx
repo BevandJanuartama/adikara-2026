@@ -3,8 +3,8 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
-import { Building, Building2, Eye, EyeOff, Hash, LoaderCircle, Lock, LogIn, Mail, MapPin, Phone, User, UserPlus } from "lucide-react";
-import { login, register, registerBuyer, type FormState } from "@/lib/actions/auth";
+import { Building, Building2, Eye, EyeOff, Hash, KeyRound, LoaderCircle, Lock, LogIn, Mail, MapPin, Phone, Send, User, UserPlus } from "lucide-react";
+import { login, register, registerBuyer, requestPasswordReset, setNewPassword, type FormState } from "@/lib/actions/auth";
 import { cn } from "@/lib/utils";
 import { Notice, btn, inputClass, labelClass } from "@/components/kriya-ui";
 import { LokasiInput } from "@/components/toko/lokasi-input";
@@ -108,6 +108,11 @@ export function LoginForm({ next }: { next?: string }) {
         autoComplete="current-password"
         placeholder="Kata sandi akun"
       />
+      <p className="-mt-2 text-right">
+        <Link href="/lupa-sandi" className="text-sm font-semibold text-hutan underline-offset-4 hover:underline">
+          Lupa kata sandi?
+        </Link>
+      </p>
 
       <Feedback state={state} />
 
@@ -210,6 +215,37 @@ export function BuyerRegisterForm({ next }: { next?: string }) {
       <button type="submit" disabled={pending} className={cn(btn.primary, "w-full")}>
         {pending ? <LoaderCircle className="animate-spin" /> : <UserPlus />}
         {pending ? "Membuat akun…" : "Buat akun pembeli"}
+      </button>
+    </form>
+  );
+}
+
+// Lupa kata sandi: minta tautan lewat email
+export function ForgotPasswordForm() {
+  const [state, action, pending] = useActionState(requestPasswordReset, undefined);
+  return (
+    <form action={action} className="space-y-5">
+      <Field name="email" label="Email" icon={Mail} type="email" autoComplete="email" placeholder="nama@email.com" />
+      <Feedback state={state} />
+      <button type="submit" disabled={pending} className={cn(btn.primary, "w-full")}>
+        {pending ? <LoaderCircle className="animate-spin" /> : <Send />}
+        {pending ? "Mengirim…" : "Kirim tautan"}
+      </button>
+    </form>
+  );
+}
+
+// Kata sandi baru (setelah membuka tautan dari email)
+export function NewPasswordForm() {
+  const [state, action, pending] = useActionState(setNewPassword, undefined);
+  return (
+    <form action={action} className="space-y-5">
+      <Field name="password" label="Kata sandi baru" icon={Lock} type="password" minLength={8} autoComplete="new-password" placeholder="Minimal 8 karakter" />
+      <Field name="password_confirm" label="Ulangi kata sandi baru" icon={Lock} type="password" minLength={8} autoComplete="new-password" />
+      <Feedback state={state} />
+      <button type="submit" disabled={pending} className={cn(btn.primary, "w-full")}>
+        {pending ? <LoaderCircle className="animate-spin" /> : <KeyRound />}
+        {pending ? "Menyimpan…" : "Simpan & masuk"}
       </button>
     </form>
   );

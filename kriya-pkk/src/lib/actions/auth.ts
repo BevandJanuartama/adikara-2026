@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { normalisasiWa } from "@/lib/marketplace/wa";
+import { appUrlDariHeader } from "@/lib/marketplace/pesanan";
 
 export type FormState = { error?: string; message?: string } | undefined;
 
@@ -131,4 +132,41 @@ export async function logoutToko() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/katalog");
+}
+
+// ---------- Lupa kata sandi ----------
+// 1. Kirim email berisi tautan → /auth/confirm (verifikasi) → /atur-sandi
+export async function requestPasswordReset(_prev: FormState, formData: FormData): Promise<FormState> {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  if (!z.string().email().safeParse(email).success) return { error: "Email tidak valid" };
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${await appUrlDariHeader()}/auth/confirm?next=/atur-sandi`,
+  });
+  if (error) {
+    console.error("[lupa-sandi]", error.message);
+    if (/rate|seconds|too many/i.test(error.message)) return { error: "Terlalu sering meminta tautan. Tunggu sebentar lalu coba lagi." };
+    return { error: "Email belum bisa dikirim. Coba lagi nanti atau hubungi pengurus/admin." };
+  }
+  // Pesan sama untuk email terdaftar maupun tidak (supaya tidak bisa dipakai menebak akun)
+  return { message: "Bila email itu terdaftar, tautan untuk membuat kata sandi baru sudah dikirim. Cek kotak masuk dan folder spam." };
+}
+
+// 2. Simpan kata sandi baru (sesi sudah dibuat oleh /auth/confirm dari tautan email)
+export async function setNewPassword(_prev: FormState, formData: FormData): Promise<FormState> {
+  const password = String(formData.get("password") ?? "");
+  const ulang = String(formData.get("password_confirm") ?? "");
+  if (password.length < 8) return { error: "Kata sandi minimal 8 karakter" };
+  if (password !== ulang) return { error: "Kedua kata sandi belum sama" };
+
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getUser();
+  if (!data.user) return { error: "Tautan sudah kedaluwarsa. Minta tautan baru di halaman Lupa kata sandi." };
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) {
+    return { error: /different|same/i.test(error.message) ? "Kata sandi baru harus berbeda dari yang lama" : error.message };
+  }
+  const { data: p } = await supabase.from("profiles").select("role").eq("id", data.user.id).maybeSingle();
+  redirect(p?.role === "pembeli" ? "/katalog" : "/beranda");
 }

@@ -3,7 +3,8 @@ import { requireMe } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import { Badge, EmptyState, PageHeader, btn } from "@/components/kriya-ui";
-import { setMemberActive } from "./actions";
+import { ActionForm, Field } from "@/components/action-form";
+import { resetMemberPassword, setMemberActive } from "./actions";
 import { AddMemberForm } from "./add-member-form";
 
 export default async function AnggotaPage() {
@@ -45,6 +46,16 @@ export default async function AnggotaPage() {
                         </div>
                       </div>
                     </div>
+                    {!isMe && m.is_active && (
+                      <details className="rounded-xl border">
+                        <summary className="cursor-pointer px-3 py-2 text-sm font-semibold text-hutan">Atur ulang kata sandi</summary>
+                        <div className="border-t p-3">
+                          <ActionForm action={resetMemberPassword.bind(null, m.id)} submitLabel="Simpan kata sandi baru" className="space-y-3">
+                            <Field label="Kata sandi baru" name="password" type="text" placeholder="Minimal 8 karakter" />
+                          </ActionForm>
+                        </div>
+                      </details>
+                    )}
                     {!isMe && (
                       <form action={setMemberActive.bind(null, m.id, !m.is_active)} className="mt-auto">
                         <button className={cn(m.is_active ? btn.danger : btn.outline, btn.small, "w-full")}>

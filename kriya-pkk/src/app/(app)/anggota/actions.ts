@@ -46,3 +46,20 @@ export async function setMemberActive(memberId: string, active: boolean) {
   if (error) throw new Error(friendlyError(error.message));
   revalidatePath("/anggota");
 }
+
+// Lupa kata sandi tanpa email: pengurus mengatur kata sandi baru untuk akun di kelompoknya
+export async function resetMemberPassword(memberId: string, _prev: MemberFormState, formData: FormData): Promise<MemberFormState> {
+  const me = await requireMe(["pengurus"]);
+  const password = String(formData.get("password") ?? "");
+  if (password.length < 8) return { error: "Kata sandi minimal 8 karakter" };
+
+  // pastikan akun itu memang anggota kelompok pengurus ini (dicek lewat RLS, bukan secret key)
+  const supabase = await createClient();
+  const { data: m } = await supabase
+    .from("profiles").select("id, full_name, group_id").eq("id", memberId).eq("group_id", me.group!.id).maybeSingle();
+  if (!m) return { error: "Akun tidak ditemukan di kelompok ini" };
+
+  const { error } = await createAdminClient().auth.admin.updateUserById(memberId, { password });
+  if (error) return { error: error.message };
+  return { message: `Kata sandi ${m.full_name} sudah diganti. Beritahukan kata sandi baru ke yang bersangkutan.` };
+}
